@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>连点成线</title>
+  <link rel="stylesheet" href="maplibre-gl.css" />
   <style>
     :root {
       --paper: #f4efe4;
@@ -272,7 +273,6 @@
     }
 
     .home-cta {
-      margin-top: 34px;
       height: 50px;
       display: inline-flex;
       align-items: center;
@@ -295,6 +295,25 @@
       color: #fffaf2;
       transform: translateY(-2px);
       box-shadow: 0 12px 26px rgba(164, 63, 53, .18);
+    }
+
+    .home-cta-row {
+      margin-top: 34px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .home-cta.map-cta {
+      background: rgba(47, 119, 116, .08);
+      border-color: rgba(47, 119, 116, .28);
+      color: #285f5c;
+    }
+
+    .home-cta.map-cta:hover {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fffaf2;
     }
 
     .section-title {
@@ -441,9 +460,9 @@
       position: absolute;
       left: 0;
       top: 0;
-      width: min(560px, calc(100vw - 520px));
-      min-width: 420px;
-      padding: 14px 16px 12px;
+      width: auto;
+      min-width: 0;
+      padding: 10px 12px;
       pointer-events: auto;
       background: rgba(255, 250, 240, .9);
       backdrop-filter: blur(16px);
@@ -463,8 +482,8 @@
     }
 
     .year-jump-input {
-      width: 92px;
-      height: 36px;
+      width: 82px;
+      height: 32px;
       border: 1px solid rgba(78, 60, 38, .18);
       border-radius: 10px;
       background: rgba(255, 250, 240, .8);
@@ -481,7 +500,7 @@
     }
 
     .year-jump-button {
-      height: 36px;
+      height: 32px;
       border: 1px solid rgba(47, 119, 116, .26);
       border-radius: 10px;
       background: rgba(47, 119, 116, .09);
@@ -496,46 +515,6 @@
       transform: translateY(-1px);
     }
 
-    .viewport-years {
-      margin-left: auto;
-      color: var(--muted);
-      font-family: var(--num);
-      font-size: 12px;
-      font-variant-numeric: oldstyle-nums tabular-nums;
-      white-space: nowrap;
-    }
-
-    .era-shortcuts {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 10px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-
-    .era-shortcuts::-webkit-scrollbar { display: none; }
-
-    .era-shortcut {
-      flex: 0 0 auto;
-      min-height: 27px;
-      border: 1px solid rgba(78, 60, 38, .14);
-      border-radius: 999px;
-      background: rgba(255, 250, 240, .64);
-      color: #625a50;
-      padding: 4px 9px;
-      cursor: pointer;
-      font-family: var(--num);
-      font-size: 12px;
-      transition: transform .16s ease, background .16s ease, border-color .16s ease, color .16s ease;
-    }
-
-    .era-shortcut:hover {
-      border-color: rgba(47, 119, 116, .3);
-      background: rgba(47, 119, 116, .08);
-      color: var(--teal);
-      transform: translateY(-1px);
-    }
 
     .filters {
       position: absolute;
@@ -773,6 +752,25 @@
       color: var(--muted);
       font-size: 14px;
       min-width: 118px;
+    }
+
+    .toolbar-link {
+      height: 34px;
+      border: 1px solid rgba(78, 60, 38, .16);
+      border-radius: 10px;
+      background: rgba(255, 250, 240, .74);
+      color: #514a40;
+      padding: 0 11px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .toolbar-link:hover {
+      border-color: rgba(47, 119, 116, .28);
+      background: rgba(47, 119, 116, .08);
+      color: var(--teal);
     }
 
     .timeline-frame {
@@ -1248,6 +1246,106 @@
       transform: translateY(-1px);
     }
 
+    .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 9px;
+      margin: 16px 0 20px;
+    }
+
+    .detail-action {
+      min-height: 36px;
+      border: 1px solid rgba(78, 60, 38, .16);
+      border-radius: 10px;
+      background: rgba(255, 250, 240, .7);
+      color: #514a40;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-weight: 750;
+      transition: transform .16s ease, background .16s ease, border-color .16s ease, color .16s ease;
+    }
+
+    .detail-action.primary {
+      border-color: rgba(47, 119, 116, .28);
+      background: rgba(47, 119, 116, .09);
+      color: var(--teal);
+    }
+
+    .detail-action:hover {
+      border-color: rgba(47, 119, 116, .32);
+      color: var(--teal);
+      background: rgba(47, 119, 116, .1);
+      transform: translateY(-1px);
+    }
+
+    .sources-section {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(78, 60, 38, .14);
+    }
+
+    .sources-section h2 {
+      margin: 0 0 14px;
+      font-size: 26px;
+      color: #202a27;
+    }
+
+    .source-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .source-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: 10px;
+      padding: 13px 14px;
+      border: 1px solid rgba(78, 60, 38, .12);
+      border-radius: 10px;
+      background: rgba(255, 250, 240, .56);
+    }
+
+    .source-type {
+      min-width: 52px;
+      border-radius: 999px;
+      background: rgba(217, 205, 185, .38);
+      color: #62584b;
+      padding: 3px 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .source-text {
+      color: #514a40;
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .source-link {
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .source-link:hover { text-decoration: underline; }
+
+    .source-note {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-left: 3px solid rgba(178, 133, 56, .66);
+      border-radius: 0 10px 10px 0;
+      background: rgba(178, 133, 56, .08);
+      color: #62584b;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
     .card-hall {
       max-width: 1180px;
       margin: 0 auto;
@@ -1382,6 +1480,13 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+    }
+
+    .search-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
       margin-bottom: 24px;
     }
 
@@ -1407,6 +1512,65 @@
     .search-filter button:hover {
       transform: translateY(-1px);
       border-color: rgba(31, 36, 33, .24);
+    }
+
+    .search-sort {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .search-sort select {
+      height: 34px;
+      border: 1px solid rgba(78, 60, 38, .16);
+      border-radius: 10px;
+      background: rgba(255, 250, 240, .75);
+      color: #514a40;
+      padding: 0 28px 0 10px;
+      cursor: pointer;
+    }
+
+    .result-timeline {
+      border: 1px solid rgba(47, 119, 116, .24);
+      border-radius: 999px;
+      background: rgba(47, 119, 116, .09);
+      color: var(--teal);
+      padding: 4px 9px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .result-timeline:hover {
+      background: rgba(47, 119, 116, .15);
+    }
+
+    .search-suggestions {
+      grid-column: 1 / -1;
+      padding: 24px;
+    }
+
+    .search-suggestions h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .suggestion-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .search-suggestion {
+      border: 1px solid rgba(82, 107, 148, .2);
+      border-radius: 999px;
+      background: rgba(82, 107, 148, .08);
+      color: #3f5a83;
+      padding: 6px 10px;
+      cursor: pointer;
     }
 
     .result-section {
@@ -1544,6 +1708,289 @@
       text-align: center;
     }
 
+    .map-view {
+      min-height: calc(100vh - 68px);
+      display: grid;
+      grid-template-rows: minmax(500px, 1fr) auto;
+      background: #d7d0bf;
+    }
+
+    .historical-map-wrap {
+      min-height: 500px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(67, 58, 44, .25);
+    }
+
+    #historical-map {
+      position: absolute;
+      inset: 0;
+      background: #aebfbe;
+    }
+
+    .map-status,
+    .map-focus-bar,
+    .map-zoom-status {
+      position: absolute;
+      z-index: 4;
+      background: rgba(255, 250, 240, .92);
+      border: 1px solid rgba(88, 70, 46, .2);
+      box-shadow: 0 10px 26px rgba(42, 35, 26, .12);
+      backdrop-filter: blur(8px);
+    }
+
+    .map-status {
+      top: 18px;
+      left: 18px;
+      width: min(340px, calc(100% - 88px));
+      padding: 14px 16px;
+      border-radius: 10px;
+    }
+
+    .map-status strong {
+      display: block;
+      font-family: var(--serif);
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .map-status span,
+    .map-zoom-status {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .war-map-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      margin-top: 9px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(88, 70, 46, .16);
+    }
+
+    .war-map-legend[hidden] { display: none; }
+
+    .war-map-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #625b51;
+    }
+
+    .war-map-legend i {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      border: 1px solid rgba(31, 36, 33, .2);
+    }
+
+    .map-zoom-status {
+      right: 18px;
+      bottom: 18px;
+      padding: 8px 11px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    .map-focus-bar {
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: min(560px, calc(100% - 400px));
+      padding: 9px 10px 9px 14px;
+      border-radius: 999px;
+    }
+
+    .map-focus-bar[hidden] { display: none; }
+
+    .map-focus-bar span {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .map-focus-bar button {
+      border: 1px solid var(--line);
+      background: #fffaf0;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 6px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .map-time-panel {
+      position: relative;
+      z-index: 5;
+      padding: 16px clamp(22px, 5vw, 72px) 14px;
+      background:
+        linear-gradient(rgba(255, 250, 240, .97), rgba(244, 239, 228, .98)),
+        radial-gradient(circle at 20% 30%, rgba(31, 36, 33, .03) .7px, transparent .9px);
+      background-size: auto, 6px 6px;
+    }
+
+    .map-time-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 10px;
+    }
+
+    .map-time-head h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .map-time-head p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .map-current-date {
+      font-family: var(--num);
+      color: var(--red);
+      font-size: 26px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .map-date-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .map-stage-button {
+      border: 1px solid rgba(88, 70, 46, .22);
+      border-radius: 999px;
+      background: rgba(255, 250, 240, .78);
+      color: #514b43;
+      padding: 7px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .map-stage-button:hover { border-color: var(--red); color: var(--red); }
+
+    .map-time-range {
+      width: 100%;
+      accent-color: var(--red);
+      cursor: ew-resize;
+    }
+
+    .map-time-ticks {
+      display: flex;
+      justify-content: space-between;
+      color: #786f63;
+      font-family: var(--num);
+      font-size: 12px;
+      padding-top: 3px;
+    }
+
+    .map-credit {
+      margin-top: 8px;
+      color: #81786b;
+      font-size: 10px;
+      text-align: right;
+    }
+
+    .map-credit a { color: inherit; }
+
+    .maplibregl-ctrl-group {
+      border-radius: 9px;
+      overflow: hidden;
+      box-shadow: 0 8px 22px rgba(42, 35, 26, .16);
+    }
+
+    .country-map-label,
+    .city-map-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #2c302e;
+      text-shadow: 0 1px 2px rgba(255, 250, 240, .95), 0 0 5px rgba(255, 250, 240, .9);
+      white-space: nowrap;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+
+    .country-map-label {
+      font-family: var(--serif);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .country-map-label.minor { font-size: 11px; }
+
+    .city-map-label {
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .city-map-label::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #2c302e;
+      box-shadow: 0 0 0 2px rgba(255, 250, 240, .75);
+    }
+
+    .map-flag {
+      width: 18px;
+      height: 12px;
+      border: 1px solid rgba(31, 36, 33, .28);
+      border-radius: 1px;
+      box-shadow: 0 1px 2px rgba(31, 36, 33, .12);
+      flex: 0 0 auto;
+    }
+
+    .map-focus-marker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .map-focus-marker .pin {
+      width: 18px;
+      height: 18px;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      background: var(--red);
+      border: 3px solid #fffaf0;
+      box-shadow: 0 0 0 3px rgba(164, 63, 53, .22), 0 5px 14px rgba(42, 35, 26, .28);
+      animation: mapPulse 1.8s ease-in-out infinite;
+    }
+
+    .map-focus-marker .label {
+      background: rgba(255, 250, 240, .94);
+      border: 1px solid rgba(164, 63, 53, .36);
+      border-radius: 7px;
+      padding: 6px 9px;
+      color: #623029;
+      font-size: 12px;
+      font-weight: 760;
+      box-shadow: 0 6px 18px rgba(42, 35, 26, .16);
+    }
+
+    @keyframes mapPulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(164, 63, 53, .18), 0 5px 14px rgba(42, 35, 26, .24); }
+      50% { box-shadow: 0 0 0 8px rgba(164, 63, 53, .08), 0 5px 18px rgba(42, 35, 26, .3); }
+    }
+
     @media (max-width: 860px) {
       .topbar { height: auto; min-height: 68px; padding: 12px 18px; align-items: flex-start; }
       .top-actions { flex-direction: column-reverse; align-items: flex-end; gap: 10px; }
@@ -1552,17 +1999,27 @@
       .nav button { padding: 8px 9px; }
       .home, .timeline-head, .detail-view, .hall-layout { grid-template-columns: 1fr; }
       .result-grid, .hall-grid { grid-template-columns: 1fr; }
+      .search-tools { align-items: flex-start; flex-direction: column; }
       .home { padding-top: 46px; gap: 40px; }
       .hall-header { display: grid; }
       .hall-header h1 { font-size: 40px; }
       .hall-panel { position: static; max-height: none; }
       .timeline-view { padding: 24px 16px 42px; }
       .timeline-frame { height: 560px; }
-      .timeline-locator { width: calc(100vw - 32px); min-width: 0; }
-      .viewport-years { display: none; }
+      .timeline-locator { width: auto; min-width: 0; }
       .detail-grid { grid-template-columns: 1fr; }
       .wide { grid-column: span 1; }
       .article h1 { font-size: 40px; }
+      .source-item { grid-template-columns: auto 1fr; }
+      .source-link { grid-column: 2; }
+      .map-view { min-height: calc(100vh - 116px); grid-template-rows: minmax(430px, 1fr) auto; }
+      .historical-map-wrap { min-height: 430px; }
+      .map-focus-bar { top: auto; bottom: 54px; left: 12px; right: 12px; max-width: none; transform: none; }
+      .map-status { left: 12px; top: 12px; }
+      .map-zoom-status { right: 12px; bottom: 12px; }
+      .map-time-panel { padding: 14px 18px 12px; }
+      .map-time-head { align-items: flex-start; }
+      .map-current-date { font-size: 21px; }
     }
   </style>
 </head>
@@ -1579,6 +2036,7 @@
         <nav class="nav" aria-label="主导航">
           <button class="active" data-view="home">首页</button>
           <button data-view="timeline">时间轴</button>
+          <button data-view="map">地图时间轴</button>
           <button data-view="cards">知识卡片</button>
         </nav>
       </div>
@@ -1591,7 +2049,10 @@
             <section>
               <h1>把历史知识点<br>连成一条线</h1>
               <p class="lead">用横向时间轴、标签筛选和结构化知识卡片，帮助历史爱好者快速看懂一段历史的主线、节奏与因果关系。</p>
-              <button class="home-cta" id="home-timeline-button">进入时间轴 →</button>
+              <div class="home-cta-row">
+                <button class="home-cta" id="home-timeline-button">进入时间轴 →</button>
+                <button class="home-cta map-cta" id="home-map-button">打开历史地图 →</button>
+              </div>
             </section>
             <section id="today-section">
               <div class="section-title">
@@ -1615,20 +2076,10 @@
             <div class="timeline-head">
               <section class="card timeline-locator" aria-label="年份定位">
                 <form class="year-jump-form" id="year-jump-form">
-                  <label for="year-jump-input">定位年份</label>
-                  <input class="year-jump-input" id="year-jump-input" type="number" inputmode="numeric" placeholder="1918" aria-describedby="viewport-years" />
+                  <label for="year-jump-input">年份</label>
+                  <input class="year-jump-input" id="year-jump-input" type="number" inputmode="numeric" placeholder="1918" />
                   <button class="year-jump-button" type="submit">前往</button>
-                  <output class="viewport-years" id="viewport-years" aria-live="polite">当前视窗</output>
                 </form>
-                <div class="era-shortcuts" aria-label="常用年份">
-                  <button class="era-shortcut" type="button" data-year="800">800</button>
-                  <button class="era-shortcut" type="button" data-year="1517">1517</button>
-                  <button class="era-shortcut" type="button" data-year="1815">1815</button>
-                  <button class="era-shortcut" type="button" data-year="1871">1871</button>
-                  <button class="era-shortcut" type="button" data-year="1918">1918</button>
-                  <button class="era-shortcut" type="button" data-year="1933">1933</button>
-                  <button class="era-shortcut" type="button" data-year="1945">1945</button>
-                </div>
               </section>
               <aside class="card filters">
                 <div class="filter-row">
@@ -1669,6 +2120,7 @@
               </aside>
             </div>
             <div class="timeline-toolbar">
+              <button class="toolbar-link" id="copy-timeline-link" type="button">复制链接</button>
               <button class="icon-btn" id="zoom-out" aria-label="缩小">−</button>
               <input id="zoom-slider" type="range" min="0.45" max="8" value="1.75" step="0.05" aria-label="缩放" />
               <button class="icon-btn" id="zoom-in" aria-label="放大">＋</button>
@@ -1680,6 +2132,49 @@
               </div>
             </div>
             <div class="timeline-overview" id="timeline-overview" aria-label="时间轴缩略导航"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="map" class="view">
+        <div class="map-view">
+          <div class="historical-map-wrap">
+            <div id="historical-map" aria-label="可缩放的历史政治地图"></div>
+            <div class="map-status">
+              <strong id="map-era-title">第一次世界大战后的世界</strong>
+              <span id="map-snapshot-note">正在准备历史国界……</span>
+              <div class="war-map-legend" id="war-map-legend" hidden>
+                <span><i style="background:#b66b5f"></i>轴心国与德军控制</span>
+                <span><i style="background:#7897b8"></i>同盟国</span>
+                <span><i style="background:#c8bea8"></i>中立</span>
+                <span><i style="background:#a995bb"></i>其他占领或保护地</span>
+              </div>
+            </div>
+            <div class="map-focus-bar" id="map-focus-bar" hidden>
+              <span id="map-focus-title"></span>
+              <button id="map-refocus" type="button">重新定位</button>
+              <button id="map-return-card" type="button">返回卡片</button>
+              <button id="map-clear-focus" type="button" aria-label="清除卡片定位">×</button>
+            </div>
+            <div class="map-zoom-status" id="map-zoom-status">世界视野 · 国家边界</div>
+          </div>
+          <div class="map-time-panel">
+            <div class="map-time-head">
+              <div>
+                <h1>地图时间轴</h1>
+                <p>拖动日期观察国界和政治实体名称变化；本阶段覆盖1918—1949年。</p>
+              </div>
+              <div class="map-date-tools">
+                <button class="map-stage-button" id="map-prev-stage" type="button">← 上一处变化</button>
+                <output class="map-current-date" id="map-current-date" for="map-time-range">1918年1月1日</output>
+                <button class="map-stage-button" id="map-next-stage" type="button">下一处变化 →</button>
+              </div>
+            </div>
+            <input class="map-time-range" id="map-time-range" type="range" aria-label="历史地图日期" />
+            <div class="map-time-ticks" aria-hidden="true">
+              <span>1918</span><span>1920</span><span>1930</span><span>1938</span><span>1945</span><span>1949</span>
+            </div>
+            <div class="map-credit">世界边界：<a href="https://github.com/aourednik/historical-basemaps" target="_blank" rel="noopener noreferrer">Historical Basemaps</a>（GPL-3.0）；1938—1945欧洲战时阶段：<a href="https://web.stanford.edu/group/spatialhistory/cgi-bin/site/project.php?id=1015" target="_blank" rel="noopener noreferrer">斯坦福历史空间实验室</a>。战时图按关键阶段切换，不代表逐日军事前线。</div>
           </div>
         </div>
       </section>
@@ -1737,7 +2232,16 @@
         <div class="search-view">
           <h1>搜索结果</h1>
           <p class="search-meta" id="search-meta"></p>
-          <div class="search-filter" id="search-filter" aria-label="搜索结果筛选"></div>
+          <div class="search-tools">
+            <div class="search-filter" id="search-filter" aria-label="搜索结果筛选"></div>
+            <label class="search-sort" for="search-sort">排序
+              <select id="search-sort">
+                <option value="relevance">相关度</option>
+                <option value="oldest">时间从早到晚</option>
+                <option value="newest">时间从晚到早</option>
+              </select>
+            </label>
+          </div>
           <section class="result-section">
             <div class="result-grid" id="search-results"></div>
           </section>
@@ -1746,6 +2250,7 @@
     </main>
   </div>
 
+  <script src="maplibre-gl.js"></script>
   <script src="cards-data.js"></script>
   <script>
     const tags = ["政治与制度", "经济与社会", "战争与外交", "文化与思想"];
@@ -1773,6 +2278,7 @@
     timelineEnd = timelineExtent.end;
 
     const byId = Object.fromEntries(allCards.map(card => [card.id, card]));
+    const timelineById = Object.fromEntries(timelineCards.map(card => [card.id, card]));
 
     const views = document.querySelectorAll(".view");
     const navButtons = document.querySelectorAll(".nav button");
@@ -1784,7 +2290,6 @@
     const zoomReadout = document.getElementById("zoom-readout");
     const yearJumpForm = document.getElementById("year-jump-form");
     const yearJumpInput = document.getElementById("year-jump-input");
-    const viewportYears = document.getElementById("viewport-years");
     const levelFilters = document.getElementById("level-filters");
     const countryFilter = document.getElementById("country-filter");
     const filtersPanel = document.querySelector(".filters");
@@ -1792,8 +2297,11 @@
     const searchInput = document.getElementById("search-input");
     const searchBox = document.getElementById("search-form");
     const searchClear = document.getElementById("search-clear");
+    const searchSort = document.getElementById("search-sort");
+    const copyTimelineLink = document.getElementById("copy-timeline-link");
     let currentQuery = "";
     let activeSearchFilter = "all";
+    let activeSearchSort = "relevance";
     let hallQuery = "";
     let hallCountryQuery = "";
     const hallActiveTypes = new Set();
@@ -1801,9 +2309,181 @@
     const hallActiveLevels = new Set();
     const detailBackStack = [];
     let detailReturnState = null;
+    let timelineFocusId = null;
+    let urlReady = false;
+    let applyingRoute = false;
+    let urlSyncTimer = null;
+    let historicalMap = null;
+    let historicalMapReady = false;
+    let mapFocusCardId = null;
+    let mapDateValue = Date.UTC(1918, 0, 1);
+    let mapCountryLabelMarkers = [];
+    let mapCityLabelMarkers = [];
+    let mapFocusMarkers = [];
+    let currentMapSnapshot = "";
+    let currentWw2Snapshot = "";
+    let pendingMapCamera = null;
+    let mapDataLoadPromise = null;
 
     function currentViewName() {
       return document.querySelector(".view.active")?.id || "home";
+    }
+
+    function setFromParam(target, value, allowedValues) {
+      target.clear();
+      String(value || "").split(",").filter(Boolean).forEach(item => {
+        if (!allowedValues || allowedValues.includes(item)) target.add(item);
+      });
+    }
+
+    function yearAtTimelinePixel(pixel) {
+      const ratio = Math.max(0, Math.min(1, pixel / axisWidthEstimate()));
+      return new Date(timelineStart + ratio * (timelineEnd - timelineStart)).getFullYear();
+    }
+
+    function timelineCenterYear() {
+      return yearAtTimelinePixel(Math.max(0, timelineFrame.scrollLeft + timelineFrame.clientWidth / 2 - 70));
+    }
+
+    function buildRouteParams() {
+      const params = new URLSearchParams();
+      const view = currentViewName();
+      if (view === "detail") {
+        params.set("card", selectedId);
+        return params;
+      }
+      params.set("view", view);
+      if (view === "timeline") {
+        params.set("year", timelineCenterYear());
+        params.set("zoom", zoom.toFixed(2));
+        if (activeTags.size) params.set("tags", Array.from(activeTags).join(","));
+        if (activeLevels !== null) params.set("levels", Array.from(activeLevels).join(","));
+        if (activeCountryQuery.trim()) params.set("country", activeCountryQuery.trim());
+        if (timelineFocusId && timelineById[timelineFocusId]) params.set("focus", timelineFocusId);
+      } else if (view === "map") {
+        params.set("date", mapDateIso(mapDateValue));
+        if (mapFocusCardId && mapCardLocations[mapFocusCardId]) params.set("mapCard", mapFocusCardId);
+        if (historicalMapReady) {
+          const center = historicalMap.getCenter();
+          params.set("lng", center.lng.toFixed(3));
+          params.set("lat", center.lat.toFixed(3));
+          params.set("mapZoom", historicalMap.getZoom().toFixed(2));
+        }
+      } else if (view === "search") {
+        if (currentQuery) params.set("q", currentQuery);
+        if (activeSearchFilter !== "all") params.set("mode", activeSearchFilter);
+        if (activeSearchSort !== "relevance") params.set("sort", activeSearchSort);
+      } else if (view === "cards") {
+        if (hallQuery) params.set("q", hallQuery);
+        if (hallCountryQuery) params.set("country", hallCountryQuery);
+        if (hallActiveTypes.size) params.set("types", Array.from(hallActiveTypes).join(","));
+        if (hallActiveTags.size) params.set("tags", Array.from(hallActiveTags).join(","));
+        if (hallActiveLevels.size) params.set("levels", Array.from(hallActiveLevels).join(","));
+      }
+      return params;
+    }
+
+    function syncUrl(mode = "replace") {
+      if (!urlReady || applyingRoute) return;
+      const url = new URL(window.location.href);
+      url.hash = buildRouteParams().toString();
+      if (mode === "push" && url.href === window.location.href) return;
+      history[mode === "push" ? "pushState" : "replaceState"]({}, "", url);
+    }
+
+    function scheduleUrlSync() {
+      if (!urlReady || applyingRoute) return;
+      window.clearTimeout(urlSyncTimer);
+      urlSyncTimer = window.setTimeout(() => syncUrl("replace"), 100);
+    }
+
+    function applyRouteFromUrl() {
+      applyingRoute = true;
+      const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const cardId = params.get("card");
+      if (cardId && byId[cardId]) {
+        const wasInDetail = currentViewName() === "detail";
+        selectedId = cardId;
+        if (!wasInDetail) {
+          detailBackStack.length = 0;
+          detailReturnState = { view: "home" };
+        } else if (detailBackStack[detailBackStack.length - 1] === cardId) {
+          detailBackStack.pop();
+        }
+        renderTimeline();
+        renderDetail();
+        showView("detail", { skipHistory: true });
+        applyingRoute = false;
+        return;
+      }
+
+      const view = ["home", "timeline", "map", "cards", "search"].includes(params.get("view")) ? params.get("view") : "home";
+      if (view === "timeline") {
+        setFromParam(activeTags, params.get("tags"), tags);
+        activeLevels = params.has("levels") ? new Set(String(params.get("levels") || "").split(",").filter(level => levels.includes(level))) : null;
+        activeCountryQuery = params.get("country") || "";
+        countryFilter.value = activeCountryQuery;
+        const routeZoom = Number(params.get("zoom"));
+        if (Number.isFinite(routeZoom)) zoom = Math.max(.45, Math.min(8, routeZoom));
+        zoomSlider.value = zoom;
+        timelineFocusId = timelineById[params.get("focus")] ? params.get("focus") : null;
+        if (timelineFocusId) selectedId = timelineFocusId;
+        renderFilters();
+        renderLevelFilters();
+        showView("timeline", { skipHistory: true, preserveScroll: true });
+        zoomReadout.textContent = `${Math.round(zoom * 100)}% · ${semanticLevelText()}`;
+        requestAnimationFrame(() => {
+          if (timelineFocusId) centerTimelineCard(timelineFocusId);
+          else if (params.has("year")) jumpToYear(params.get("year"));
+          applyingRoute = false;
+        });
+        return;
+      }
+
+      if (view === "map") {
+        const routeDate = Date.parse(params.get("date") || "");
+        if (Number.isFinite(routeDate)) mapDateValue = clampMapDate(routeDate);
+        mapFocusCardId = mapCardLocations[params.get("mapCard")] ? params.get("mapCard") : null;
+        updateMapTimeControls();
+        showView("map", { skipHistory: true, preserveScroll: true });
+        const lng = Number(params.get("lng"));
+        const lat = Number(params.get("lat"));
+        const routeMapZoom = Number(params.get("mapZoom"));
+        pendingMapCamera = Number.isFinite(lng) && Number.isFinite(lat) && Number.isFinite(routeMapZoom)
+          ? { center: [lng, lat], zoom: Math.max(0, Math.min(12, routeMapZoom)) }
+          : null;
+        window.setTimeout(() => {
+          if (!historicalMapReady) return;
+          if (mapFocusCardId) applyMapCardFocus(false);
+          else if (pendingMapCamera) {
+            historicalMap.jumpTo(pendingMapCamera);
+            pendingMapCamera = null;
+          }
+        }, 120);
+        applyingRoute = false;
+        return;
+      }
+
+      if (view === "search") {
+        currentQuery = params.get("q") || "";
+        activeSearchFilter = ["all", "title", "content"].includes(params.get("mode")) ? params.get("mode") : "all";
+        activeSearchSort = ["relevance", "oldest", "newest"].includes(params.get("sort")) ? params.get("sort") : "relevance";
+        searchInput.value = currentQuery;
+        searchSort.value = activeSearchSort;
+        updateSearchClear();
+        renderSearch();
+      } else if (view === "cards") {
+        hallQuery = params.get("q") || "";
+        hallCountryQuery = params.get("country") || "";
+        setFromParam(hallActiveTypes, params.get("types"), cardHallTypes());
+        setFromParam(hallActiveTags, params.get("tags"), tags);
+        setFromParam(hallActiveLevels, params.get("levels"), levels);
+        document.getElementById("card-hall-search").value = hallQuery;
+        document.getElementById("card-hall-country").value = hallCountryQuery;
+      }
+      timelineFocusId = null;
+      showView(view, { skipHistory: true, preserveScroll: true });
+      applyingRoute = false;
     }
 
     function captureViewState(view = currentViewName()) {
@@ -1836,27 +2516,43 @@
         if (activeLevels === null) renderLevelFilters();
         renderTimeline();
       }
+      if (name === "map") {
+        requestAnimationFrame(() => {
+          ensureHistoricalMap();
+          historicalMap?.resize();
+        });
+      }
       if (name === "cards") renderCardHall();
       if (options.restoreState) {
         restoreViewState(options.restoreState);
       } else if (!options.preserveScroll) {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
+      if (!options.skipHistory) syncUrl(options.historyMode || "push");
     }
 
-    navButtons.forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.view)));
+    navButtons.forEach(btn => btn.addEventListener("click", () => {
+      if (btn.dataset.view === "timeline") timelineFocusId = null;
+      if (btn.dataset.view === "map") clearMapCardFocus(false);
+      showView(btn.dataset.view);
+    }));
     document.getElementById("brand-home").addEventListener("click", () => showView("home"));
     document.getElementById("home-timeline-button").addEventListener("click", () => showView("timeline"));
+    document.getElementById("home-map-button").addEventListener("click", () => {
+      clearMapCardFocus(false);
+      showView("map");
+    });
     document.getElementById("detail-exit").addEventListener("click", () => {
       const previousCard = detailBackStack.pop();
       if (previousCard) {
-        setSelected(previousCard, "detail", { resetDetailStack: false });
+        setSelected(previousCard, "detail", { resetDetailStack: false, historyMode: "replace" });
       } else {
         const targetState = detailReturnState || { view: "timeline" };
         detailReturnState = null;
         showView(targetState.view || "timeline", {
           restoreState: targetState,
-          skipHomeRefresh: targetState.view === "home"
+          skipHomeRefresh: targetState.view === "home",
+          historyMode: "replace"
         });
       }
     });
@@ -1864,6 +2560,8 @@
       event.preventDefault();
       currentQuery = searchInput.value.trim();
       activeSearchFilter = "all";
+      activeSearchSort = "relevance";
+      searchSort.value = activeSearchSort;
       updateSearchClear();
       renderSearch();
       showView("search");
@@ -1874,6 +2572,11 @@
       currentQuery = "";
       updateSearchClear();
       showView(previousView || "home");
+    });
+    searchSort.addEventListener("change", event => {
+      activeSearchSort = event.target.value;
+      renderSearch();
+      syncUrl("replace");
     });
     document.getElementById("card-hall-search").addEventListener("input", event => {
       hallQuery = event.target.value;
@@ -1907,6 +2610,1154 @@
     function fieldValue(card, label) {
       return (card.fields || []).find(field => field.label === label)?.value || "";
     }
+
+    const MAP_MIN_DATE = Date.UTC(1918, 0, 1);
+    const MAP_MAX_DATE = Date.UTC(1949, 11, 31);
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const mapStageDates = [
+      "1918-11-11", "1920-01-01", "1930-01-01", "1938-04-01", "1939-03-15",
+      "1939-10-06", "1940-06-25", "1941-04-18", "1942-01-01", "1943-01-01",
+      "1943-09-08", "1944-08-25", "1945-05-08", "1949-05-23", "1949-10-07"
+    ].map(value => Date.parse(value));
+    const mapTimeRange = document.getElementById("map-time-range");
+    const mapCurrentDate = document.getElementById("map-current-date");
+    const mapSnapshotNote = document.getElementById("map-snapshot-note");
+    const mapEraTitle = document.getElementById("map-era-title");
+    const warMapLegend = document.getElementById("war-map-legend");
+    const mapZoomStatus = document.getElementById("map-zoom-status");
+    const mapFocusBar = document.getElementById("map-focus-bar");
+    const mapFocusTitle = document.getElementById("map-focus-title");
+
+    mapTimeRange.min = String(MAP_MIN_DATE);
+    mapTimeRange.max = String(MAP_MAX_DATE);
+    mapTimeRange.step = String(DAY_MS);
+
+    const mapCardLocations = {
+      extra662: {
+        date: "1918-03-03",
+        center: [23.6848, 52.0976],
+        zoom: 7.2,
+        places: [{ name: "布列斯特-立托夫斯克（今白俄罗斯布列斯特）", coordinates: [23.6848, 52.0976] }]
+      },
+      extra1316: {
+        date: "1918-10-30",
+        center: [25.271, 39.874],
+        zoom: 7.4,
+        places: [{ name: "穆德罗斯港（希腊利姆诺斯岛）", coordinates: [25.271, 39.874] }]
+      },
+      extra667: {
+        date: "1918-11-11",
+        center: [2.9067, 49.4278],
+        zoom: 8.2,
+        places: [{ name: "贡比涅森林停战空地（法国）", coordinates: [2.9067, 49.4278] }]
+      },
+      extra668: {
+        date: "1919-01-18",
+        center: [2.25, 48.84],
+        zoom: 7.0,
+        places: [
+          { name: "巴黎和会主要会场（法国巴黎）", coordinates: [2.3522, 48.8566] },
+          { name: "凡尔赛宫（法国凡尔赛）", coordinates: [2.1204, 48.8049] }
+        ]
+      },
+      card59: {
+        date: "1919-06-28",
+        center: [2.1204, 48.8049],
+        zoom: 8.2,
+        places: [{ name: "凡尔赛宫镜厅（法国凡尔赛）", coordinates: [2.1204, 48.8049] }],
+        affected: "germany-1914-1920"
+      },
+      card117: {
+        date: "1921-05-05",
+        center: [-0.1276, 51.5072],
+        zoom: 7.0,
+        places: [{ name: "伦敦（最后通牒提出地）", coordinates: [-0.1276, 51.5072] }]
+      },
+      card15: {
+        date: "1921-03-20",
+        center: [18.85, 50.25],
+        zoom: 6.8,
+        places: [{ name: "上西里西亚公投区", coordinates: [18.85, 50.25] }]
+      },
+      card16: {
+        date: "1922-04-10",
+        center: [8.9463, 44.4056],
+        zoom: 7.4,
+        places: [{ name: "热那亚会议会址所在城市（意大利）", coordinates: [8.9463, 44.4056] }]
+      },
+      card17: {
+        date: "1922-04-16",
+        center: [9.227, 44.3497],
+        zoom: 8.0,
+        places: [{ name: "拉帕洛（意大利）", coordinates: [9.227, 44.3497] }]
+      },
+      card64: {
+        date: "1929-10-24",
+        center: [-74.006, 40.7128],
+        zoom: 7.2,
+        places: [{ name: "纽约华尔街（美国）", coordinates: [-74.006, 40.7128] }]
+      },
+      card71: {
+        date: "1933-01-30",
+        center: [13.405, 52.52],
+        zoom: 7.4,
+        places: [{ name: "柏林（希特勒出任总理）", coordinates: [13.405, 52.52] }]
+      },
+      extra172: {
+        date: "1938-09-30",
+        center: [11.582, 48.1351],
+        zoom: 7.6,
+        places: [{ name: "慕尼黑（《慕尼黑协定》谈判与签署地）", coordinates: [11.582, 48.1351] }]
+      },
+      extra177: {
+        date: "1939-08-23",
+        center: [37.6173, 55.7558],
+        zoom: 7.1,
+        places: [{ name: "莫斯科克里姆林宫（签署地）", coordinates: [37.6173, 55.7558] }]
+      },
+      extra179: {
+        date: "1939-09-01",
+        center: [18.6716, 54.406],
+        zoom: 7.2,
+        places: [{ name: "但泽自由市与西盘半岛（今波兰格但斯克）", coordinates: [18.6716, 54.406] }]
+      },
+      extra193: {
+        date: "1940-06-22",
+        center: [2.9067, 49.4278],
+        zoom: 8.2,
+        places: [{ name: "贡比涅森林停战空地（法国）", coordinates: [2.9067, 49.4278] }]
+      },
+      extra219: {
+        date: "1942-01-20",
+        center: [13.1656, 52.433],
+        zoom: 8.5,
+        places: [{ name: "万湖别墅（德国柏林）", coordinates: [13.1656, 52.433] }]
+      },
+      extra230: {
+        date: "1942-11-19",
+        center: [44.5168, 48.708],
+        zoom: 6.8,
+        places: [{ name: "斯大林格勒（今俄罗斯伏尔加格勒）", coordinates: [44.5168, 48.708] }]
+      },
+      extra250: {
+        date: "1944-06-06",
+        center: [-0.55, 49.35],
+        zoom: 7.0,
+        places: [{ name: "诺曼底登陆海岸（法国）", coordinates: [-0.55, 49.35] }]
+      },
+      extra265: {
+        date: "1945-02-04",
+        center: [34.1615, 44.4952],
+        zoom: 7.4,
+        places: [{ name: "雅尔塔里瓦几亚宫（克里米亚）", coordinates: [34.1615, 44.4952] }]
+      },
+      extra3: {
+        date: "1945-07-17",
+        center: [13.0645, 52.3906],
+        zoom: 7.6,
+        places: [{ name: "波茨坦采琪莲霍夫宫（德国）", coordinates: [13.0645, 52.3906] }]
+      },
+      extra6: {
+        date: "1945-11-20",
+        center: [11.0767, 49.4521],
+        zoom: 7.8,
+        places: [{ name: "纽伦堡司法宫（德国）", coordinates: [11.0767, 49.4521] }]
+      },
+      extra14: {
+        date: "1948-06-24",
+        center: [13.405, 52.52],
+        zoom: 7.1,
+        places: [{ name: "柏林（封锁与空运中心）", coordinates: [13.405, 52.52] }]
+      },
+      extra16: {
+        date: "1949-05-23",
+        center: [7.0982, 50.7374],
+        zoom: 7.6,
+        places: [{ name: "波恩（德意志联邦共和国政府所在地）", coordinates: [7.0982, 50.7374] }]
+      },
+      extra19: {
+        date: "1949-10-07",
+        center: [13.405, 52.52],
+        zoom: 7.6,
+        places: [{ name: "东柏林（德意志民主共和国政治中心）", coordinates: [13.405, 52.52] }]
+      }
+    };
+
+    const historicalCountryNames = {
+      "German Empire": "德意志帝国",
+      "Germany": "德国",
+      "East Prussia": "东普鲁士",
+      "France": "法国",
+      "United Kingdom of Great Britain and Ireland": "英国",
+      "Russian Empire": "俄罗斯帝国",
+      "White Russia": "白俄罗斯",
+      "South Russia": "南俄罗斯",
+      "Austro-Hungarian Empire": "奥匈帝国",
+      "Austria": "奥地利",
+      "Hungary": "匈牙利",
+      "Ottoman Empire": "奥斯曼帝国",
+      "Ottoman Sultanate": "奥斯曼苏丹国",
+      "Poland": "波兰",
+      "Czechoslovakia": "捷克斯洛伐克",
+      "Yugoslavia": "南斯拉夫",
+      "Kingdom of Serbs, Croats and Slovenes": "塞尔维亚人、克罗地亚人和斯洛文尼亚人王国",
+      "Italy": "意大利",
+      "Spain": "西班牙",
+      "Portugal": "葡萄牙",
+      "Belgium": "比利时",
+      "Netherlands": "荷兰",
+      "Luxembourg": "卢森堡",
+      "Switzerland": "瑞士",
+      "Denmark": "丹麦",
+      "Norway": "挪威",
+      "Sweden": "瑞典",
+      "Finland": "芬兰",
+      "Estonia": "爱沙尼亚",
+      "Latvia": "拉脱维亚",
+      "Lithuania": "立陶宛",
+      "Romania": "罗马尼亚",
+      "Bulgaria": "保加利亚",
+      "Greece": "希腊",
+      "Albania": "阿尔巴尼亚",
+      "Serbia": "塞尔维亚",
+      "Montenegro": "黑山",
+      "Ireland": "爱尔兰",
+      "Iceland": "冰岛",
+      "United States of America": "美国",
+      "United States": "美国",
+      "Canada": "加拿大",
+      "Mexico": "墨西哥",
+      "Brazil": "巴西",
+      "Argentina": "阿根廷",
+      "China": "中国",
+      "Republic of China": "中华民国",
+      "Japan": "日本",
+      "British India": "英属印度",
+      "India": "印度",
+      "Persia": "波斯",
+      "Afghanistan": "阿富汗",
+      "Egypt": "埃及",
+      "Australia": "澳大利亚",
+      "New Zealand": "新西兰",
+      "South Africa": "南非",
+      "Abyssinia": "阿比西尼亚",
+      "Algeria": "阿尔及利亚",
+      "American Samoa": "美属萨摩亚",
+      "Anglo-Egyption Sudan": "英埃苏丹",
+      "Angola": "安哥拉",
+      "Anguilla": "安圭拉",
+      "Annam": "安南",
+      "Antigua and Barbuda": "安提瓜和巴布达",
+      "Arabia (Nejd)": "内志",
+      "Armenia": "亚美尼亚",
+      "Azerbaijan": "阿塞拜疆",
+      "Barbados": "巴巴多斯",
+      "Belgian Congo": "比属刚果",
+      "Belize": "伯利兹",
+      "Bhutan": "不丹",
+      "Bolivia": "玻利维亚",
+      "Botswana": "博茨瓦纳",
+      "British East Africa": "英属东非",
+      "British Protectorate": "英国保护地",
+      "British Raj": "英属印度",
+      "British Somaliland": "英属索马里兰",
+      "Brunei": "文莱",
+      "Burundi": "布隆迪",
+      "Ceylon": "锡兰",
+      "Chile": "智利",
+      "Chinese Warlords": "中国军阀割据地区",
+      "Cochin China": "交趾支那",
+      "Colombia": "哥伦比亚",
+      "Costa Rica": "哥斯达黎加",
+      "Cuba": "古巴",
+      "Djibouti": "吉布提",
+      "Dominica": "多米尼克",
+      "Dominican Republic": "多米尼加共和国",
+      "Dominion of Newfoundland": "纽芬兰自治领",
+      "Dutch East Indies": "荷属东印度",
+      "Ecuador": "厄瓜多尔",
+      "El Salvador": "萨尔瓦多",
+      "Emirate of Bin Shal'an": "伊本·沙兰酋长国",
+      "Empire of Japan": "大日本帝国",
+      "Equatorial Guinea": "赤道几内亚",
+      "Eritrea": "厄立特里亚",
+      "Ethiopia": "埃塞俄比亚",
+      "Far Eastern SSR": "远东共和国",
+      "Fiji": "斐济",
+      "French Cameroons": "法属喀麦隆",
+      "French Equatorial Africa": "法属赤道非洲",
+      "French Guiana": "法属圭亚那",
+      "French Indochina": "法属印度支那",
+      "French Indo-China": "法属印度支那",
+      "French Somaliland": "法属索马里兰",
+      "French West Africa": "法属西非",
+      "Gambia, The": "冈比亚",
+      "Georgia": "格鲁吉亚",
+      "German E. Africa (Tanganyika)": "德属东非（坦噶尼喀）",
+      "German South-West Africa": "德属西南非洲",
+      "Ghana": "加纳",
+      "Gold Coast": "黄金海岸",
+      "Grenada": "格林纳达",
+      "Guadeloupe": "瓜德罗普",
+      "Guatemala": "危地马拉",
+      "Guinea-Bissau": "几内亚比绍",
+      "Guyana": "圭亚那",
+      "Hail": "杰贝勒沙马尔酋长国",
+      "Haiti": "海地",
+      "Hejaz": "汉志王国",
+      "Honduras": "洪都拉斯",
+      "Hong Kong": "香港",
+      "Iran": "伊朗",
+      "Italian Somaliland": "意属索马里兰",
+      "Jamaica": "牙买加",
+      "Kamerun": "德属喀麦隆",
+      "Kenya": "肯尼亚",
+      "Kingfom of Italy": "意大利王国",
+      "Kuwait": "科威特",
+      "Lesotho": "莱索托",
+      "Liberia": "利比里亚",
+      "Libya": "利比亚",
+      "Libya (IT)": "意属利比亚",
+      "Madagascar (France)": "法属马达加斯加",
+      "Malawi": "马拉维",
+      "Malaya": "英属马来亚",
+      "Malaysia": "马来亚",
+      "Malta": "马耳他",
+      "Manchu Empire": "清朝",
+      "Manchuria": "满洲地区",
+      "Mandatory Palestine (GB)": "英属巴勒斯坦托管地",
+      "Martinique": "马提尼克",
+      "Mesopotamia (GB)": "英属美索不达米亚",
+      "Mongolia": "蒙古",
+      "Montserrat": "蒙特塞拉特",
+      "Morocco": "摩洛哥",
+      "Mozambique": "莫桑比克",
+      "Muscat and Oman": "马斯喀特和阿曼",
+      "Nepal": "尼泊尔",
+      "Netherlands Antilles": "荷属安的列斯",
+      "Netherlands Indies": "荷属东印度",
+      "Nicaragua": "尼加拉瓜",
+      "Nigeria": "尼日利亚",
+      "Niue": "纽埃",
+      "Panama": "巴拿马",
+      "Papua New Guinea": "巴布亚新几内亚",
+      "Paraguay": "巴拉圭",
+      "Peru": "秘鲁",
+      "Philippines": "菲律宾",
+      "Portuguese Guinea": "葡属几内亚",
+      "Puerto Rico": "波多黎各",
+      "Qatar": "卡塔尔",
+      "Rapa Nui": "复活节岛",
+      "Rattanakosin Kingdom": "暹罗",
+      "Rhodesia": "罗得西亚",
+      "Rio De Oro": "里奥德奥罗",
+      "Rwanda (Belgium)": "比属卢旺达",
+      "Saint Barthelemy": "圣巴泰勒米",
+      "Saint Kitts and Nevis": "圣基茨和尼维斯",
+      "Saint Lucia": "圣卢西亚",
+      "Saint Martin": "圣马丁",
+      "Saint Vincent and the Grenadines": "圣文森特和格林纳丁斯",
+      "Sakhalin (RU)": "俄属萨哈林",
+      "Samoa": "萨摩亚",
+      "Sierra Leone": "塞拉利昂",
+      "Spanish Morocco": "西属摩洛哥",
+      "Spanish Sahara": "西属撒哈拉",
+      "Sudan": "苏丹",
+      "Suriname": "苏里南",
+      "Swaziland": "斯威士兰",
+      "Syria (France)": "法属叙利亚托管地",
+      "Tanzania, United Republic of": "坦噶尼喀",
+      "Tibet": "西藏",
+      "Togo": "多哥",
+      "Togoland": "德属多哥兰",
+      "Tonga": "汤加",
+      "Trinidad": "特立尼达",
+      "Trucial Oman": "特鲁西尔阿曼",
+      "Tunisia": "突尼斯",
+      "Uganda": "乌干达",
+      "Ukraine": "乌克兰",
+      "Union of South Africa": "南非联邦",
+      "United States Virgin Islands": "美属维尔京群岛",
+      "Uruguay": "乌拉圭",
+      "USSR": "苏维埃俄国",
+      "Venezuela": "委内瑞拉",
+      "Wallis and Futuna Islands": "瓦利斯和富图纳群岛",
+      "Xinjiang": "新疆",
+      "Yemen": "也门",
+      "Zaire (Belgium)": "比属刚果",
+      "Zambia": "赞比亚",
+      "Zimbabwe": "津巴布韦"
+      ,"Danzig": "但泽自由市"
+      ,"United Kingdom": "英国"
+      ,"Laos": "老挝"
+      ,"Cambodia": "柬埔寨"
+      ,"Angola (Portugal)": "葡属安哥拉"
+      ,"Northern Rhodesia": "北罗得西亚"
+      ,"Mozambique (Portugal)": "葡属莫桑比克"
+      ,"Southern Rhodesia": "南罗得西亚"
+      ,"Turkey": "土耳其"
+      ,"Algeria (France)": "法属阿尔及利亚"
+      ,"Morocco (France)": "法属摩洛哥"
+      ,"Siam": "暹罗"
+      ,"Jordan": "外约旦"
+      ,"Israel": "以色列"
+      ,"Eritrea (Italy)": "意属厄立特里亚"
+      ,"Ethiopia (Italy)": "意占埃塞俄比亚"
+      ,"Yemen (UK)": "亚丁保护地（英国）"
+      ,"Saudi Arabia": "沙特阿拉伯"
+      ,"Walbis Bay": "沃尔维斯湾"
+      ,"Chinese warlords": "中国军阀割据地区"
+      ,"Turks and Caicos Islands": "特克斯和凯科斯群岛"
+      ,"Bahamas": "巴哈马"
+      ,"Congo (France)": "法属刚果"
+      ,"Oman (British Raj)": "英属控制下的阿曼"
+      ,"New Hebrides": "新赫布里底群岛"
+      ,"New Caledonia": "新喀里多尼亚"
+      ,"Guam": "关岛"
+      ,"Gilbert and Elice Islands": "吉尔伯特和埃利斯群岛"
+      ,"Saipan": "塞班岛"
+      ,"Andorra": "安道尔"
+      ,"Korea (USSR)": "苏占朝鲜北部"
+      ,"Japan (USA)": "美占日本"
+      ,"Western Sahara": "西撒哈拉"
+      ,"United Arab Emirates": "特鲁西尔诸酋长国"
+      ,"Mali": "法属苏丹"
+      ,"Oman": "阿曼"
+      ,"Niger": "尼日尔"
+      ,"Chad": "乍得"
+      ,"Tonkin": "北圻"
+      ,"Jamaica (UK)": "英属牙买加"
+      ,"Burkina Faso": "上沃尔特"
+      ,"Central African Republic": "乌班吉-沙立"
+      ,"Sri Lanka": "锡兰"
+      ,"Zaire": "比属刚果"
+      ,"Rwanda": "卢旺达"
+      ,"Nyasaland": "尼亚萨兰"
+      ,"Namibia": "西南非洲"
+      ,"Iraq": "伊拉克"
+      ,"Syria": "叙利亚"
+      ,"Lebanon": "黎巴嫩"
+      ,"Burma": "缅甸"
+      ,"Bangladesh": "东孟加拉"
+      ,"Thailand": "泰国"
+      ,"Benin": "达荷美"
+      ,"Ivory Coast": "科特迪瓦"
+      ,"Congo": "刚果"
+      ,"Gabon": "加蓬"
+      ,"Southern Cameroon": "南喀麦隆"
+      ,"Fezzan (Frech Lybia)": "费赞（法占区）"
+      ,"Mauritania": "毛里塔尼亚"
+      ,"Senegal": "塞内加尔"
+      ,"Guinea-Bissau (Portugal)": "葡属几内亚"
+      ,"Guinea": "几内亚"
+      ,"Antarctica": "南极洲"
+      ,"Pakistan": "巴基斯坦"
+      ,"Germany (Soviet)": "苏占德国"
+      ,"Saar Protectorate": "萨尔保护领"
+      ,"Germany (UK)": "英占德国"
+      ,"Germany (USA)": "美占德国"
+      ,"Germany (France)": "法占德国"
+      ,"Martinique (France)": "法属马提尼克"
+      ,"Somalia": "索马里"
+      ,"Cyraneica (UK Lybia)": "昔兰尼加（英占区）"
+      ,"Tripolitana (UK Lybia)": "的黎波里塔尼亚（英占区）"
+      ,"Cameroon": "喀麦隆"
+      ,"Indonesia": "印度尼西亚"
+      ,"Dutch Guinea": "荷属新几内亚"
+      ,"Taiwan": "台湾"
+      ,"Korea (USA)": "美占朝鲜南部"
+      ,"Gibraltar": "直布罗陀"
+      ,"Cyprus": "塞浦路斯"
+      ,"Liechtenstein": "列支敦士登"
+      ,"Monaco": "摩纳哥"
+      ,"San Marino": "圣马力诺"
+      ,"Vatican": "梵蒂冈"
+      ,"Soviet Union": "苏联"
+      ,"Protectorate of Bohemia and Moravia": "波希米亚和摩拉维亚保护国"
+      ,"Slovakia": "斯洛伐克"
+      ,"General Government": "波兰总督府"
+      ,"Croatia": "克罗地亚独立国"
+      ,"Serbian Residual State": "德占塞尔维亚"
+      ,"Vichy France": "维希法国"
+      ,"Reichskommissariat Ostland": "东方专员辖区"
+      ,"Reichskommissariat Ukraine": "乌克兰专员辖区"
+      ,"Transnistria": "德涅斯特河沿岸占领区"
+      ,"Italian Social Republic": "意大利社会共和国"
+    };
+
+    const mapCities = [
+      { name: "伦敦", coordinates: [-0.1276, 51.5072], rank: 1 },
+      { name: "巴黎", coordinates: [2.3522, 48.8566], rank: 1 },
+      { name: "柏林", coordinates: [13.405, 52.52], rank: 1 },
+      { name: "维也纳", coordinates: [16.3738, 48.2082], rank: 1 },
+      { name: "罗马", coordinates: [12.4964, 41.9028], rank: 1 },
+      { name: "莫斯科", coordinates: [37.6173, 55.7558], rank: 1 },
+      { name: "华沙", coordinates: [21.0122, 52.2297], rank: 1 },
+      { name: "布拉格", coordinates: [14.4378, 50.0755], rank: 1 },
+      { name: "布达佩斯", coordinates: [19.0402, 47.4979], rank: 1 },
+      { name: "君士坦丁堡（今伊斯坦布尔）", coordinates: [28.9784, 41.0082], rank: 1 },
+      { name: "凡尔赛", coordinates: [2.1204, 48.8049], rank: 2 },
+      { name: "贡比涅", coordinates: [2.8263, 49.4179], rank: 2 },
+      { name: "热那亚", coordinates: [8.9463, 44.4056], rank: 2 },
+      { name: "拉帕洛", coordinates: [9.227, 44.3497], rank: 2 },
+      { name: "慕尼黑", coordinates: [11.582, 48.1351], rank: 2 },
+      { name: "布列斯特-立托夫斯克（今布列斯特）", coordinates: [23.6848, 52.0976], rank: 2 },
+      { name: "布雷斯劳（今弗罗茨瓦夫）", coordinates: [17.0385, 51.1079], rank: 2 },
+      { name: "但泽（今格但斯克）", coordinates: [18.6466, 54.352], rank: 2 },
+      { name: "纽伦堡", coordinates: [11.0767, 49.4521], rank: 2 },
+      { name: "波恩", coordinates: [7.0982, 50.7374], rank: 2 },
+      { name: "斯大林格勒（今伏尔加格勒）", coordinates: [44.5168, 48.708], rank: 2 },
+      { name: "雅尔塔", coordinates: [34.1615, 44.4952], rank: 2 },
+      { name: "纽约", coordinates: [-74.006, 40.7128], rank: 2 },
+      { name: "日内瓦", coordinates: [6.1432, 46.2044], rank: 2 },
+      { name: "北京", coordinates: [116.4074, 39.9042], rank: 1 },
+      { name: "东京", coordinates: [139.6917, 35.6895], rank: 1 },
+      { name: "华盛顿", coordinates: [-77.0369, 38.9072], rank: 1 }
+    ];
+
+    const majorHistoricalStates = new Set([
+      "German Empire", "Germany", "France", "United Kingdom of Great Britain and Ireland", "United Kingdom",
+      "Russian Empire", "USSR", "Austro-Hungarian Empire", "Ottoman Empire", "Ottoman Sultanate", "Turkey",
+      "United States of America", "United States", "China", "Republic of China", "Chinese Warlords", "Chinese warlords",
+      "Japan", "Empire of Japan", "Japan (USA)", "British India", "British Raj"
+    ]);
+
+    const historicalLabelAnchors = {
+      "United Kingdom of Great Britain and Ireland": [-2.4, 54.5],
+      "Russian Empire": [55, 57],
+      "USSR": [58, 56],
+      "Soviet Union": [48, 57],
+      "White Russia": [27.8, 53.5],
+      "South Russia": [39, 48],
+      "German Empire": [10.3, 51.1],
+      "Germany": [10.3, 51.1],
+      "Germany (Soviet)": [13.2, 52.2],
+      "Germany (UK)": [8.4, 52.5],
+      "Germany (USA)": [10.5, 49.7],
+      "Germany (France)": [7.9, 48.8],
+      "Saar Protectorate": [6.9, 49.4],
+      "General Government": [20.5, 51.2],
+      "Protectorate of Bohemia and Moravia": [15.4, 49.8],
+      "Vichy France": [2.4, 44.6],
+      "Reichskommissariat Ostland": [26, 55.5],
+      "Reichskommissariat Ukraine": [31, 49],
+      "Serbian Residual State": [20.8, 44.2],
+      "Italian Social Republic": [10.8, 45.2],
+      "East Prussia": [21, 54.5],
+      "Austro-Hungarian Empire": [17.2, 47.4],
+      "Ottoman Empire": [35, 39],
+      "Ottoman Sultanate": [35, 39],
+      "France": [2.2, 46.4],
+      "Italy": [12.6, 42.4],
+      "Spain": [-3.7, 40.2],
+      "Portugal": [-8, 39.7],
+      "Norway": [9.5, 62.2],
+      "Sweden": [15, 62],
+      "Finland": [26, 64],
+      "Greece": [22, 39],
+      "Empire of Japan": [138, 37],
+      "Japan": [138, 37],
+      "Japan (USA)": [138, 37],
+      "Korea (USSR)": [127.2, 40.2],
+      "Korea (USA)": [127.5, 36.4],
+      "China": [104, 35],
+      "Republic of China": [104, 35],
+      "Chinese Warlords": [108, 34],
+      "British Raj": [78, 23],
+      "British India": [78, 23],
+      "United States": [-99, 39],
+      "United States of America": [-99, 39],
+      "Canada": [-106, 56],
+      "Brazil": [-52, -10],
+      "Argentina": [-64, -35],
+      "Australia": [134, -25],
+      "New Zealand": [172, -41],
+      "Dutch East Indies": [113, -3],
+      "Netherlands Indies": [113, -3],
+      "Philippines": [122, 12]
+    };
+
+    const preparedMapSnapshots = {};
+    const preparedWw2Snapshots = {};
+
+    function clampMapDate(value) {
+      return Math.max(MAP_MIN_DATE, Math.min(MAP_MAX_DATE, Number(value) || MAP_MIN_DATE));
+    }
+
+    function mapDateIso(value) {
+      return new Date(clampMapDate(value)).toISOString().slice(0, 10);
+    }
+
+    function formatMapDate(value) {
+      const date = new Date(clampMapDate(value));
+      return `${date.getUTCFullYear()}年${date.getUTCMonth() + 1}月${date.getUTCDate()}日`;
+    }
+
+    function mapSnapshotForDate(value = mapDateValue) {
+      if (value < Date.UTC(1920, 0, 1)) return "1914";
+      if (value < Date.UTC(1930, 0, 1)) return "1920";
+      if (value < Date.UTC(1938, 0, 1)) return "1930";
+      if (value < Date.UTC(1945, 4, 8)) return "1938";
+      return "1945";
+    }
+
+    function ww2SnapshotForDate(value = mapDateValue) {
+      if (value < Date.UTC(1938, 3, 1) || value >= Date.UTC(1945, 4, 8)) return "";
+      if (value < Date.UTC(1939, 2, 15)) return "1938";
+      if (value < Date.UTC(1939, 9, 6)) return "1939";
+      if (value < Date.UTC(1940, 5, 25)) return "1940";
+      if (value < Date.UTC(1941, 3, 18)) return "1940-summer";
+      if (value < Date.UTC(1942, 0, 1)) return "1941";
+      if (value < Date.UTC(1943, 0, 1)) return "1942";
+      if (value < Date.UTC(1943, 8, 8)) return "1943";
+      if (value < Date.UTC(1944, 7, 25)) return "1944";
+      return "1945";
+    }
+
+    function geometryBounds(geometry) {
+      const bounds = [Infinity, Infinity, -Infinity, -Infinity];
+      const visit = value => {
+        if (!Array.isArray(value)) return;
+        if (typeof value[0] === "number" && typeof value[1] === "number") {
+          bounds[0] = Math.min(bounds[0], value[0]);
+          bounds[1] = Math.min(bounds[1], value[1]);
+          bounds[2] = Math.max(bounds[2], value[0]);
+          bounds[3] = Math.max(bounds[3], value[1]);
+          return;
+        }
+        value.forEach(visit);
+      };
+      visit(geometry?.coordinates);
+      return bounds;
+    }
+
+    function ringLabelPoint(ring) {
+      let twiceArea = 0;
+      let centerX = 0;
+      let centerY = 0;
+      for (let index = 0; index < ring.length - 1; index += 1) {
+        const [x1, y1] = ring[index];
+        const [x2, y2] = ring[index + 1];
+        const cross = x1 * y2 - x2 * y1;
+        twiceArea += cross;
+        centerX += (x1 + x2) * cross;
+        centerY += (y1 + y2) * cross;
+      }
+      if (Math.abs(twiceArea) < .000001) return null;
+      return {
+        coordinates: [centerX / (3 * twiceArea), centerY / (3 * twiceArea)],
+        area: Math.abs(twiceArea / 2)
+      };
+    }
+
+    function geometryLabelPoint(geometry) {
+      const rings = geometry?.type === "Polygon"
+        ? [geometry.coordinates?.[0]]
+        : geometry?.type === "MultiPolygon"
+          ? geometry.coordinates.map(polygon => polygon?.[0])
+          : [];
+      return rings.filter(Boolean).map(ringLabelPoint).filter(Boolean).sort((a, b) => b.area - a.area)[0] || null;
+    }
+
+    function stableMapColor(value) {
+      const palette = ["#d7b78d", "#a7bdad", "#b7a8c5", "#c8b67d", "#93adb8", "#c49f9b", "#b5bd8e", "#aab0c5", "#d1a97d"];
+      let hash = 0;
+      String(value || "unknown").split("").forEach(char => { hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0; });
+      return palette[Math.abs(hash) % palette.length];
+    }
+
+    function prepareMapSnapshot(year) {
+      if (preparedMapSnapshots[year]) return preparedMapSnapshots[year];
+      const raw = window.HISTORICAL_MAP_DATA?.[year] || { type: "FeatureCollection", features: [] };
+      const data = {
+        type: "FeatureCollection",
+        features: raw.features.map(feature => {
+          const properties = { ...(feature.properties || {}) };
+          const bounds = geometryBounds(feature.geometry);
+          const width = Math.max(0, bounds[2] - bounds[0]);
+          const height = Math.max(0, bounds[3] - bounds[1]);
+          const calculatedLabel = geometryLabelPoint(feature.geometry);
+          const manualLabel = historicalLabelAnchors[properties.NAME];
+          const sovereign = properties.PARTOF || properties.NAME;
+          properties.nameZh = historicalCountryNames[properties.NAME] || "";
+          const westernOccupationZone = ["Germany (UK)", "Germany (USA)", "Germany (France)"].includes(properties.NAME);
+          properties.color = westernOccupationZone ? "#b9a47a" : properties.NAME === "Germany (Soviet)" ? "#a7a0b9" : stableMapColor(sovereign);
+          properties.rank = majorHistoricalStates.has(properties.NAME) ? 1 : (properties.NAME === sovereign ? 2 : 3);
+          properties.labelLng = manualLabel?.[0] ?? calculatedLabel?.coordinates?.[0] ?? (bounds[0] + bounds[2]) / 2;
+          properties.labelLat = manualLabel?.[1] ?? calculatedLabel?.coordinates?.[1] ?? (bounds[1] + bounds[3]) / 2;
+          properties.labelArea = calculatedLabel?.area || width * height;
+          return { ...feature, properties };
+        })
+      };
+      const labelsByName = new Map();
+      data.features.forEach(feature => {
+        const key = feature.properties.NAME;
+        const existing = labelsByName.get(key);
+        if (!existing || feature.properties.labelArea > existing.properties.labelArea) labelsByName.set(key, feature);
+      });
+      preparedMapSnapshots[year] = { data, labels: Array.from(labelsByName.values()) };
+      return preparedMapSnapshots[year];
+    }
+
+    function ww2StatusCategory(name, status) {
+      const value = String(status || "").toLowerCase();
+      if (value.includes("neutral")) return "neutral";
+      if (value.includes("allies")) return "allies";
+      if (name === "Soviet Union") return "allies";
+      if (value.includes("german") || value.includes("axis") || (value.includes("belligerent") && ["Germany", "Italy"].includes(name))) return "axis";
+      if (value.includes("italian") || value.includes("romanian") || value.includes("protectorate")) return "occupied";
+      return "other";
+    }
+
+    function prepareWw2Snapshot(year) {
+      if (!year) return { data: { type: "FeatureCollection", features: [] }, labels: [] };
+      if (preparedWw2Snapshots[year]) return preparedWw2Snapshots[year];
+      let raw = window.WW2_EUROPE_MAP_DATA?.[year] || { type: "FeatureCollection", features: [] };
+      if (year === "1940-summer") {
+        const westNames = new Set(["France", "Vichy France", "Belgium", "Netherlands", "Luxembourg", "Norway", "Denmark"]);
+        raw = {
+          type: "FeatureCollection",
+          features: window.WW2_EUROPE_MAP_DATA["1940"].features.filter(feature => !westNames.has(feature.properties.NAME))
+            .concat(window.WW2_EUROPE_MAP_DATA["1941"].features.filter(feature => westNames.has(feature.properties.NAME)))
+        };
+      }
+      const categoryColors = { axis: "#b66b5f", allies: "#7897b8", neutral: "#c8bea8", occupied: "#a995bb", other: "#b8ad95" };
+      const data = {
+        type: "FeatureCollection",
+        features: raw.features.map(feature => {
+          const properties = { ...(feature.properties || {}) };
+          const bounds = geometryBounds(feature.geometry);
+          const calculatedLabel = geometryLabelPoint(feature.geometry);
+          const manualLabel = historicalLabelAnchors[properties.NAME];
+          properties.nameZh = historicalCountryNames[properties.NAME] || "";
+          properties.statusCategory = ww2StatusCategory(properties.NAME, properties.STATUS);
+          properties.color = categoryColors[properties.statusCategory];
+          properties.rank = majorHistoricalStates.has(properties.NAME) || ["Soviet Union", "United Kingdom"].includes(properties.NAME) ? 1 : 2;
+          properties.labelLng = manualLabel?.[0] ?? calculatedLabel?.coordinates?.[0] ?? (bounds[0] + bounds[2]) / 2;
+          properties.labelLat = manualLabel?.[1] ?? calculatedLabel?.coordinates?.[1] ?? (bounds[1] + bounds[3]) / 2;
+          properties.labelArea = calculatedLabel?.area || Math.max(0, bounds[2] - bounds[0]) * Math.max(0, bounds[3] - bounds[1]);
+          return { ...feature, properties };
+        })
+      };
+      const labelsByName = new Map();
+      data.features.forEach(feature => {
+        const key = feature.properties.NAME;
+        const existing = labelsByName.get(key);
+        if (!existing || feature.properties.labelArea > existing.properties.labelArea) labelsByName.set(key, feature);
+      });
+      preparedWw2Snapshots[year] = { data, labels: Array.from(labelsByName.values()) };
+      return preparedWw2Snapshots[year];
+    }
+
+    function flagStyleForCountry(name) {
+      const horizontal = (...colors) => `linear-gradient(${colors.map((color, index) => `${color} ${index * 100 / colors.length}% ${(index + 1) * 100 / colors.length}%`).join(",")})`;
+      const vertical = (...colors) => `linear-gradient(90deg,${colors.map((color, index) => `${color} ${index * 100 / colors.length}% ${(index + 1) * 100 / colors.length}%`).join(",")})`;
+      if (name === "German Empire") return horizontal("#171717", "#f5f1e7", "#b42e2e");
+      if (name === "Germany") return horizontal("#171717", "#b42e2e", "#d2a62f");
+      if (name === "France") return vertical("#24458f", "#f5f1e7", "#b42e2e");
+      if (name.includes("United Kingdom")) return "linear-gradient(90deg,transparent 42%,#fff 42% 58%,transparent 58%),linear-gradient(transparent 37%,#fff 37% 63%,transparent 63%),linear-gradient(90deg,transparent 46%,#b42e2e 46% 54%,transparent 54%),linear-gradient(transparent 43%,#b42e2e 43% 57%,transparent 57%),#23447a";
+      if (name === "Russian Empire" || name === "White Russia" || name === "South Russia") return horizontal("#f5f1e7", "#31599b", "#b42e2e");
+      if (name === "USSR" || name === "Soviet Union") return horizontal("#b42e2e", "#b42e2e", "#b42e2e");
+      if (name === "Austro-Hungarian Empire" || name === "Austria") return horizontal("#b42e2e", "#f5f1e7", "#b42e2e");
+      if (name.includes("Ottoman")) return "radial-gradient(circle at 58% 50%,#f5f1e7 0 18%,transparent 19%),#b42e2e";
+      if (name === "Turkey") return "radial-gradient(circle at 58% 50%,#f5f1e7 0 18%,transparent 19%),#b42e2e";
+      if (name === "Italy") return vertical("#238255", "#f5f1e7", "#b42e2e");
+      if (name === "Poland") return horizontal("#f5f1e7", "#c93d58");
+      if (name === "Belgium") return vertical("#171717", "#d7ae2c", "#b42e2e");
+      if (name === "Netherlands") return horizontal("#b42e2e", "#f5f1e7", "#31599b");
+      if (name === "Japan" || name === "Empire of Japan" || name === "Japan (USA)") return "radial-gradient(circle,#b42e2e 0 36%,transparent 38%),#f5f1e7";
+      if (name === "China" || name === "Republic of China") return horizontal("#b42e2e", "#d7ae2c", "#31599b", "#f5f1e7", "#171717");
+      if (name.includes("United States")) return "repeating-linear-gradient(#b42e2e 0 1.4px,#f5f1e7 1.4px 2.8px)";
+      return "";
+    }
+
+    function mapSemanticText(zoom = historicalMap?.getZoom() || 1) {
+      if (zoom < 1.5) return "世界视野 · 国家边界";
+      if (zoom < 2.5) return "世界区域 · 主要国家名称";
+      if (zoom < 4.0) return "国家视野 · 国家名称与历史旗帜";
+      if (zoom < 5.3) return "多国视野 · 国家与首都";
+      if (zoom < 6.6) return "地区视野 · 首都名称";
+      if (zoom < 7.9) return "城市群视野 · 主要城市名称";
+      if (zoom < 9.3) return "城市视野 · 城市名称（边界待可靠数据）";
+      return "城市细部 · 精确地点";
+    }
+
+    function updateMapTimeControls() {
+      mapDateValue = clampMapDate(mapDateValue);
+      mapTimeRange.value = String(mapDateValue);
+      mapCurrentDate.textContent = formatMapDate(mapDateValue);
+      const snapshot = mapSnapshotForDate();
+      const ww2Snapshot = ww2SnapshotForDate();
+      if (ww2Snapshot) {
+        const stageLabel = ww2Snapshot === "1940-summer" ? "1940年西欧战役后" : `${ww2Snapshot}年`;
+        mapEraTitle.textContent = `第二次世界大战 · ${stageLabel}阶段`;
+        mapSnapshotNote.textContent = ww2Snapshot === "1940" && mapDateValue < Date.UTC(1940, 3, 1)
+          ? "波兰战役后阶段图 · 以1940年4月边界资料为底"
+          : ww2Snapshot === "1940-summer"
+            ? "法国停战后阶段图 · 组合1940与1941边界资料"
+            : `${ww2Snapshot}年4月欧洲边界与占领状态快照`;
+        warMapLegend.hidden = false;
+        return;
+      }
+      warMapLegend.hidden = true;
+      if (mapDateValue >= Date.UTC(1949, 9, 7)) {
+        mapEraTitle.textContent = "冷战德国 · 东西德并立";
+        mapSnapshotNote.textContent = "1949年10月7日东德成立 · 以1945占领区边界表示分区轮廓";
+        return;
+      }
+      if (mapDateValue >= Date.UTC(1949, 4, 23)) {
+        mapEraTitle.textContent = "冷战德国 · 西德成立";
+        mapSnapshotNote.textContent = "1949年5月23日西德成立 · 苏占区仍标为占领区";
+        return;
+      }
+      const snapshotInfo = {
+        "1914": ["第一次世界大战末期的世界", "1914版边界快照 · 当前用于1918—1919"],
+        "1920": ["一战后的世界重组", "1920版边界快照 · 当前用于1920—1929"],
+        "1930": ["战间期的世界", "1930版边界快照 · 当前用于1930—1937"],
+        "1938": ["第二次世界大战前夕", "1938版边界快照 · 当前用于1938—1944"],
+        "1945": ["第二次世界大战后的世界", "1945版边界快照 · 当前用于1945—1949"]
+      }[snapshot];
+      mapEraTitle.textContent = snapshotInfo[0];
+      mapSnapshotNote.textContent = snapshotInfo[1];
+    }
+
+    function clearMapMarkers(collection) {
+      collection.forEach(marker => marker.remove());
+      collection.length = 0;
+    }
+
+    function rectanglesOverlap(a, b, padding = 5) {
+      return !(a.right + padding < b.left || a.left - padding > b.right || a.bottom + padding < b.top || a.top - padding > b.bottom);
+    }
+
+    function renderMapSemanticLabels() {
+      if (!historicalMapReady) return;
+      clearMapMarkers(mapCountryLabelMarkers);
+      clearMapMarkers(mapCityLabelMarkers);
+      const zoom = historicalMap.getZoom();
+      mapZoomStatus.textContent = mapSemanticText(zoom);
+      const snapshot = prepareMapSnapshot(mapSnapshotForDate());
+      const ww2Snapshot = prepareWw2Snapshot(ww2SnapshotForDate());
+      const hasWw2Overlay = ww2Snapshot.data.features.length > 0;
+      let labelFeatures = hasWw2Overlay
+        ? snapshot.labels.filter(feature => {
+            const { labelLng, labelLat } = feature.properties;
+            return labelLng < -25 || labelLng > 75 || labelLat < 30 || labelLat > 72;
+          }).concat(ww2Snapshot.labels)
+        : snapshot.labels;
+      if (!hasWw2Overlay && mapDateValue >= Date.UTC(1949, 4, 23)) {
+        const westernZones = new Set(["Germany (UK)", "Germany (USA)", "Germany (France)"]);
+        labelFeatures = labelFeatures.filter(feature => !westernZones.has(feature.properties.NAME));
+        labelFeatures.push({ properties: {
+          NAME: "West Germany", nameZh: "德意志联邦共和国（西德）", rank: 1,
+          labelLng: 9.2, labelLat: 50.8, labelArea: 120
+        }});
+        if (mapDateValue >= Date.UTC(1949, 9, 7)) {
+          labelFeatures = labelFeatures.filter(feature => feature.properties.NAME !== "Germany (Soviet)");
+          labelFeatures.push({ properties: {
+            NAME: "East Germany", nameZh: "德意志民主共和国（东德）", rank: 1,
+            labelLng: 13.1, labelLat: 52.2, labelArea: 90
+          }});
+        }
+      }
+      const occupied = [];
+      const showRank = zoom < 1.5 ? 0 : zoom < 2.5 ? 1 : zoom < 3.9 ? 2 : 3;
+      labelFeatures
+        .filter(feature => feature.properties.nameZh && feature.properties.rank <= showRank)
+        .sort((a, b) => a.properties.rank - b.properties.rank || b.properties.labelArea - a.properties.labelArea)
+        .forEach(feature => {
+          const p = feature.properties;
+          if (!Number.isFinite(p.labelLng) || !Number.isFinite(p.labelLat)) return;
+          const point = historicalMap.project([p.labelLng, p.labelLat]);
+          if (point.x < -80 || point.y < -30 || point.x > historicalMap.getCanvas().clientWidth + 80 || point.y > historicalMap.getCanvas().clientHeight + 30) return;
+          const width = Math.min(210, Math.max(42, String(p.nameZh).length * 13 + (zoom >= 2.5 && flagStyleForCountry(p.NAME) ? 25 : 0)));
+          const rect = { left: point.x - width / 2, right: point.x + width / 2, top: point.y - 10, bottom: point.y + 10 };
+          if (occupied.some(other => rectanglesOverlap(rect, other))) return;
+          occupied.push(rect);
+          const el = document.createElement("div");
+          el.className = `country-map-label ${p.rank === 3 ? "minor" : ""}`;
+          const flag = zoom >= 2.5 ? flagStyleForCountry(p.NAME) : "";
+          if (flag) {
+            const flagEl = document.createElement("span");
+            flagEl.className = "map-flag";
+            flagEl.style.background = flag;
+            el.appendChild(flagEl);
+          }
+          const name = document.createElement("span");
+          name.textContent = p.nameZh;
+          el.appendChild(name);
+          mapCountryLabelMarkers.push(new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([p.labelLng, p.labelLat]).addTo(historicalMap));
+        });
+
+      const cityRank = zoom >= 7.9 ? 2 : zoom >= 5.3 ? 1 : 0;
+      mapCities.filter(city => city.rank <= cityRank).forEach(city => {
+        const point = historicalMap.project(city.coordinates);
+        if (point.x < -80 || point.y < -20 || point.x > historicalMap.getCanvas().clientWidth + 80 || point.y > historicalMap.getCanvas().clientHeight + 20) return;
+        const width = Math.min(190, Math.max(34, city.name.length * 11));
+        const rect = { left: point.x - width / 2, right: point.x + width / 2, top: point.y - 8, bottom: point.y + 8 };
+        if (occupied.some(other => rectanglesOverlap(rect, other, 3))) return;
+        occupied.push(rect);
+        const el = document.createElement("div");
+        el.className = "city-map-label";
+        el.textContent = city.name;
+        mapCityLabelMarkers.push(new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(city.coordinates).addTo(historicalMap));
+      });
+    }
+
+    function emptyFeatureCollection() {
+      return { type: "FeatureCollection", features: [] };
+    }
+
+    function updateMapBoundaryFocus() {
+      if (!historicalMapReady) return;
+      const config = mapCardLocations[mapFocusCardId];
+      let oldData = emptyFeatureCollection();
+      let newData = emptyFeatureCollection();
+      if (config?.affected === "germany-1914-1920") {
+        oldData = {
+          type: "FeatureCollection",
+          features: prepareMapSnapshot("1914").data.features.filter(feature => feature.properties.NAME === "German Empire")
+        };
+        newData = {
+          type: "FeatureCollection",
+          features: prepareMapSnapshot("1920").data.features.filter(feature => feature.properties.NAME === "Germany")
+        };
+      }
+      historicalMap.getSource("focus-border-old")?.setData(oldData);
+      historicalMap.getSource("focus-border-new")?.setData(newData);
+    }
+
+    function updateHistoricalMapSnapshot(force = false) {
+      updateMapTimeControls();
+      if (!historicalMapReady) return;
+      const snapshot = mapSnapshotForDate();
+      if (force || currentMapSnapshot !== snapshot) {
+        currentMapSnapshot = snapshot;
+        historicalMap.getSource("historical-countries")?.setData(prepareMapSnapshot(snapshot).data);
+      }
+      const ww2Snapshot = ww2SnapshotForDate();
+      if (force || currentWw2Snapshot !== ww2Snapshot) {
+        currentWw2Snapshot = ww2Snapshot;
+        historicalMap.getSource("ww2-europe")?.setData(prepareWw2Snapshot(ww2Snapshot).data);
+      }
+      updateMapBoundaryFocus();
+      renderMapSemanticLabels();
+    }
+
+    function mapCitiesGeoJson() {
+      return {
+        type: "FeatureCollection",
+        features: mapCities.map(city => ({
+          type: "Feature",
+          properties: { rank: city.rank },
+          geometry: { type: "Point", coordinates: city.coordinates }
+        }))
+      };
+    }
+
+    function loadHistoricalMapData() {
+      if (window.HISTORICAL_MAP_DATA && window.WW2_EUROPE_MAP_DATA) return Promise.resolve();
+      if (mapDataLoadPromise) return mapDataLoadPromise;
+      mapDataLoadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "map-data.js";
+        script.onload = resolve;
+        script.onerror = () => reject(new Error("历史地图数据载入失败"));
+        document.head.appendChild(script);
+      });
+      return mapDataLoadPromise;
+    }
+
+    function ensureHistoricalMap() {
+      if (historicalMap) return;
+      if (!window.maplibregl) {
+        mapSnapshotNote.textContent = "地图资源未能载入，请刷新页面重试。";
+        return;
+      }
+      if (!window.HISTORICAL_MAP_DATA || !window.WW2_EUROPE_MAP_DATA) {
+        mapSnapshotNote.textContent = "正在载入历史国界数据……";
+        loadHistoricalMapData().then(ensureHistoricalMap).catch(() => {
+          mapSnapshotNote.textContent = "历史国界数据未能载入，请刷新页面重试。";
+        });
+        return;
+      }
+      historicalMap = new maplibregl.Map({
+        container: "historical-map",
+        style: {
+          version: 8,
+          sources: {},
+          layers: [{ id: "paper-sea", type: "background", paint: { "background-color": "#aebfbe" } }]
+        },
+        center: [14, 44],
+        zoom: 1.35,
+        minZoom: 0.55,
+        maxZoom: 11,
+        renderWorldCopies: false,
+        attributionControl: false,
+        localIdeographFontFamily: "Noto Serif SC, Songti SC, serif",
+        locale: {
+          "NavigationControl.ZoomIn": "放大",
+          "NavigationControl.ZoomOut": "缩小",
+          "NavigationControl.ResetBearing": "重置方向",
+          "AttributionControl.ToggleAttribution": "显示或隐藏地图来源"
+        }
+      });
+      historicalMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+      historicalMap.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: "历史边界数据 · 斯坦福二战欧洲边界" }), "bottom-left");
+      historicalMap.on("load", () => {
+        historicalMap.addSource("historical-countries", { type: "geojson", data: prepareMapSnapshot(mapSnapshotForDate()).data });
+        historicalMap.addLayer({
+          id: "historical-country-fill",
+          type: "fill",
+          source: "historical-countries",
+          paint: { "fill-color": ["get", "color"], "fill-opacity": .86 }
+        });
+        historicalMap.addLayer({
+          id: "historical-country-lines",
+          type: "line",
+          source: "historical-countries",
+          paint: {
+            "line-color": "#4f514b",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 0, .55, 5, 1.15, 9, 1.8],
+            "line-opacity": .82
+          }
+        });
+        historicalMap.addSource("ww2-europe", { type: "geojson", data: prepareWw2Snapshot(ww2SnapshotForDate()).data });
+        historicalMap.addLayer({
+          id: "ww2-europe-fill",
+          type: "fill",
+          source: "ww2-europe",
+          paint: { "fill-color": ["get", "color"], "fill-opacity": .94 }
+        });
+        historicalMap.addLayer({
+          id: "ww2-europe-lines",
+          type: "line",
+          source: "ww2-europe",
+          paint: {
+            "line-color": "#3f423e",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 1, .75, 5, 1.5, 9, 2.1],
+            "line-opacity": .94
+          }
+        });
+        historicalMap.addSource("map-cities", { type: "geojson", data: mapCitiesGeoJson() });
+        historicalMap.addLayer({
+          id: "capital-city-points",
+          type: "circle",
+          source: "map-cities",
+          minzoom: 4.6,
+          filter: ["==", ["get", "rank"], 1],
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4.6, 2, 8, 4], "circle-color": "#303532", "circle-stroke-color": "#fffaf0", "circle-stroke-width": 1 }
+        });
+        historicalMap.addLayer({
+          id: "other-city-points",
+          type: "circle",
+          source: "map-cities",
+          minzoom: 6.5,
+          filter: ["==", ["get", "rank"], 2],
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 6.5, 1.5, 9, 3.5], "circle-color": "#303532", "circle-stroke-color": "#fffaf0", "circle-stroke-width": 1 }
+        });
+        historicalMap.addSource("focus-border-old", { type: "geojson", data: emptyFeatureCollection() });
+        historicalMap.addSource("focus-border-new", { type: "geojson", data: emptyFeatureCollection() });
+        historicalMap.addLayer({
+          id: "focus-border-old-line",
+          type: "line",
+          source: "focus-border-old",
+          paint: { "line-color": "#a43f35", "line-width": 3, "line-dasharray": [2, 1.4], "line-opacity": .9 }
+        });
+        historicalMap.addLayer({
+          id: "focus-border-new-line",
+          type: "line",
+          source: "focus-border-new",
+          paint: { "line-color": "#2f7774", "line-width": 3, "line-dasharray": [1, 1.1], "line-opacity": .95 }
+        });
+        historicalMapReady = true;
+        currentMapSnapshot = mapSnapshotForDate();
+        currentWw2Snapshot = ww2SnapshotForDate();
+        updateHistoricalMapSnapshot(true);
+        if (mapFocusCardId) applyMapCardFocus(false);
+        else if (pendingMapCamera) {
+          historicalMap.jumpTo(pendingMapCamera);
+          pendingMapCamera = null;
+        }
+      });
+      historicalMap.on("moveend", () => {
+        renderMapSemanticLabels();
+        scheduleUrlSync();
+      });
+      historicalMap.on("zoomend", renderMapSemanticLabels);
+    }
+
+    function renderMapFocusMarkers() {
+      clearMapMarkers(mapFocusMarkers);
+      if (!historicalMapReady || !mapFocusCardId) return;
+      const config = mapCardLocations[mapFocusCardId];
+      if (!config) return;
+      config.places.forEach(place => {
+        const el = document.createElement("div");
+        el.className = "map-focus-marker";
+        const pin = document.createElement("span");
+        pin.className = "pin";
+        const label = document.createElement("span");
+        label.className = "label";
+        label.textContent = place.name;
+        el.append(pin, label);
+        mapFocusMarkers.push(new maplibregl.Marker({ element: el, anchor: "left" }).setLngLat(place.coordinates).addTo(historicalMap));
+      });
+    }
+
+    function applyMapCardFocus(animate = true) {
+      const config = mapCardLocations[mapFocusCardId];
+      if (!config) return;
+      mapDateValue = clampMapDate(Date.parse(config.date));
+      updateHistoricalMapSnapshot();
+      mapFocusTitle.textContent = `定位自卡片：${byId[mapFocusCardId]?.title || "历史卡片"}`;
+      mapFocusBar.hidden = false;
+      if (!historicalMapReady) return;
+      renderMapFocusMarkers();
+      updateMapBoundaryFocus();
+      historicalMap[animate ? "flyTo" : "jumpTo"]({ center: config.center, zoom: config.zoom, essential: true });
+      scheduleUrlSync();
+    }
+
+    function focusCardOnMap(cardId) {
+      if (!mapCardLocations[cardId]) return;
+      mapFocusCardId = cardId;
+      showView("map");
+      window.setTimeout(() => applyMapCardFocus(true), 80);
+    }
+
+    function clearMapCardFocus(sync = true) {
+      mapFocusCardId = null;
+      mapFocusBar.hidden = true;
+      clearMapMarkers(mapFocusMarkers);
+      updateMapBoundaryFocus();
+      if (sync) scheduleUrlSync();
+    }
+
+    mapTimeRange.addEventListener("input", event => {
+      mapDateValue = clampMapDate(Number(event.target.value));
+      updateHistoricalMapSnapshot();
+      scheduleUrlSync();
+    });
+    function jumpMapStage(direction) {
+      const sorted = direction > 0 ? mapStageDates : [...mapStageDates].reverse();
+      const target = sorted.find(value => direction > 0 ? value > mapDateValue + DAY_MS : value < mapDateValue - DAY_MS);
+      if (!Number.isFinite(target)) return;
+      mapDateValue = target;
+      updateHistoricalMapSnapshot();
+      scheduleUrlSync();
+    }
+    document.getElementById("map-prev-stage").addEventListener("click", () => jumpMapStage(-1));
+    document.getElementById("map-next-stage").addEventListener("click", () => jumpMapStage(1));
+    document.getElementById("map-refocus").addEventListener("click", () => applyMapCardFocus(true));
+    document.getElementById("map-return-card").addEventListener("click", () => {
+      if (!mapFocusCardId) return;
+      selectedId = mapFocusCardId;
+      renderDetail();
+      showView("detail");
+    });
+    document.getElementById("map-clear-focus").addEventListener("click", () => clearMapCardFocus(true));
+    updateMapTimeControls();
 
     function parseFirstDate(text, preferEnd = false) {
       const value = String(text || "");
@@ -2123,7 +3974,7 @@
       selectedId = id;
       renderTimeline();
       renderDetail();
-      if (view) showView(view);
+      if (view) showView(view, { historyMode: options.historyMode || "push" });
     }
 
     function randomItem(pool, excludeIds = new Set()) {
@@ -2191,6 +4042,29 @@
       "资料备注"
     ]);
 
+    const searchAliases = new Map([
+      ["一战", ["第一次世界大战"]],
+      ["二战", ["第二次世界大战"]],
+      ["神罗", ["神圣罗马帝国"]],
+      ["魏玛", ["魏玛共和国", "魏玛德国"]],
+      ["纳粹", ["纳粹德国", "国家社会主义"]],
+      ["东德", ["德意志民主共和国", "苏占区"]],
+      ["西德", ["德意志联邦共和国", "西占区"]],
+      ["苏联", ["苏维埃社会主义共和国联盟"]],
+      ["凡尔赛", ["凡尔赛和约"]],
+      ["俾斯麦", ["奥托·冯·俾斯麦"]]
+    ]);
+
+    function expandedSearchTerms(query) {
+      const direct = String(query || "").trim().toLowerCase();
+      const terms = new Set([direct]);
+      searchAliases.forEach((expansions, alias) => {
+        if (direct === alias) expansions.forEach(term => terms.add(term.toLowerCase()));
+        else if (direct.includes(alias)) expansions.forEach(term => terms.add(direct.replace(alias, term.toLowerCase())));
+      });
+      return Array.from(terms).filter(Boolean);
+    }
+
     function searchableContentFields(card) {
       return (card.fields || []).filter(field => {
         const label = String(field.label || "").trim();
@@ -2202,7 +4076,8 @@
     function textForSearch(card) {
       return [
         card.summary,
-        ...searchableContentFields(card).map(field => field.value)
+        ...searchableContentFields(card).map(field => field.value),
+        ...(card.relationItems || [])
       ].join("\n").toLowerCase();
     }
 
@@ -2216,23 +4091,99 @@
       return `${start > 0 ? "..." : ""}${highlightText(text.slice(start, end), query)}${end < text.length ? "..." : ""}`;
     }
 
-    function excerptFor(card, query) {
+    function excerptFor(card, query, matchedTerm = query) {
+      const term = String(matchedTerm || query);
       const fields = searchableContentFields(card);
-      const hit = fields.find(field => String(field.value).toLowerCase().includes(query.toLowerCase()));
-      if (hit) return `${htmlEscape(hit.label)}：${matchContext(hit.value, query)}`;
-      return matchContext(card.summary, query);
+      const hit = fields.find(field => String(field.value).toLowerCase().includes(term.toLowerCase()));
+      const prefix = term.toLowerCase() !== query.toLowerCase() ? `<span class="badge teal">按“${htmlEscape(term)}”匹配</span> ` : "";
+      if (hit) return `${prefix}${htmlEscape(hit.label)}：${matchContext(hit.value, term)}`;
+      const relationHit = (card.relationItems || []).find(value => String(value).toLowerCase().includes(term.toLowerCase()));
+      if (relationHit) return `${prefix}关联卡片：${matchContext(relationHit, term)}`;
+      return `${prefix}${matchContext(card.summary, term)}`;
     }
 
-    function resultCard(card, query, mode = "content") {
+    function searchDateValue(card) {
+      const timelineCard = timelineById[card.id];
+      const dateText = timelineCard?.date || timelineCard?.startDate || parseFirstDate(card.timeText);
+      const value = dateText ? new Date(dateText).getTime() : NaN;
+      return Number.isFinite(value) ? value : null;
+    }
+
+    function searchMatch(card, query, terms) {
+      const direct = query.toLowerCase();
+      const title = card.title.toLowerCase();
+      const content = textForSearch(card);
+      const levelBoost = { S: 12, A: 8, B: 4, C: 0 }[card.level] || 0;
+      if (title === direct) return { card, mode: "title", section: "title", matchedTerm: query, score: 1000 + levelBoost };
+      if (title.startsWith(direct)) return { card, mode: "title", section: "title", matchedTerm: query, score: 820 + levelBoost };
+      if (title.includes(direct)) return { card, mode: "title", section: "title", matchedTerm: query, score: 680 + levelBoost };
+
+      for (const term of terms.slice(1)) {
+        if (title.includes(term)) return { card, mode: "alias", section: "title", matchedTerm: term, score: (title === term ? 620 : 520) + levelBoost };
+      }
+      if (content.includes(direct)) {
+        const summaryHit = String(card.summary || "").toLowerCase().includes(direct);
+        return { card, mode: "content", section: "content", matchedTerm: query, score: (summaryHit ? 330 : 250) + levelBoost };
+      }
+      for (const term of terms.slice(1)) {
+        if (content.includes(term)) return { card, mode: "alias", section: "content", matchedTerm: term, score: 150 + levelBoost };
+      }
+      return null;
+    }
+
+    function sortSearchItems(items) {
+      return [...items].sort((a, b) => {
+        if (activeSearchSort === "oldest" || activeSearchSort === "newest") {
+          const aDate = searchDateValue(a.card);
+          const bDate = searchDateValue(b.card);
+          if (aDate === null && bDate !== null) return 1;
+          if (bDate === null && aDate !== null) return -1;
+          if (aDate !== null && bDate !== null && aDate !== bDate) return activeSearchSort === "oldest" ? aDate - bDate : bDate - aDate;
+        }
+        return b.score - a.score || a.card.title.localeCompare(b.card.title, "zh-CN");
+      });
+    }
+
+    function normalizedSuggestionText(value) {
+      return String(value || "").toLowerCase().replace(/[\s《》“”‘’·—\-（）()]/g, "");
+    }
+
+    function suggestionScore(query, title) {
+      const q = normalizedSuggestionText(query);
+      const t = normalizedSuggestionText(title);
+      if (!q || !t) return 0;
+      if (t.includes(q)) return .95;
+      const qChars = new Set(q);
+      const tChars = new Set(t);
+      const shared = Array.from(qChars).filter(char => tChars.has(char)).length;
+      const coverage = shared / Math.max(qChars.size, 1);
+      const precision = shared / Math.max(tChars.size, 1);
+      return coverage * .72 + precision * .28;
+    }
+
+    function searchSuggestions(query) {
+      return allCards.map(card => ({ card, score: suggestionScore(query, card.title) }))
+        .filter(item => item.score >= .22)
+        .sort((a, b) => b.score - a.score || a.card.title.length - b.card.title.length)
+        .slice(0, 6)
+        .map(item => item.card);
+    }
+
+    function resultCard(item, query) {
+      const { card, mode, matchedTerm } = item;
+      const titleTerm = mode === "title" ? query : mode === "alias" ? matchedTerm : "";
+      const modeLabel = mode === "title" ? "标题命中" : mode === "alias" ? "别名命中" : "内容命中";
+      const modeClass = mode === "title" ? "blue" : mode === "alias" ? "teal" : "gold";
       return `
         <article class="card result-card" data-card="${card.id}">
-          <h3>${mode === "title" ? highlightText(card.title, query) : htmlEscape(card.title)}</h3>
-          <p>${excerptFor(card, query)}</p>
+          <h3>${titleTerm && card.title.toLowerCase().includes(titleTerm.toLowerCase()) ? highlightText(card.title, titleTerm) : htmlEscape(card.title)}</h3>
+          <p>${excerptFor(card, query, matchedTerm)}</p>
           <div class="badges">
-            <span class="badge ${mode === "title" ? "blue" : "gold"}">${mode === "title" ? "标题命中" : "内容命中"}</span>
+            <span class="badge ${modeClass}">${modeLabel}</span>
             <span class="badge red grade">${card.level} 级</span>
             <span class="badge">${card.type}</span>
             ${(card.tags || []).slice(0, 2).map(tag => tagBadgeHtml(tag)).join("")}
+            ${timelineById[card.id] ? `<button class="result-timeline" type="button" data-timeline-card="${card.id}">已上时间轴 · 定位</button>` : ""}
           </div>
         </article>
       `;
@@ -2240,7 +4191,16 @@
 
     function bindResultClicks() {
       document.querySelectorAll(".result-card[data-card]").forEach(el => {
-        el.addEventListener("click", () => setSelected(el.dataset.card, "detail"));
+        el.addEventListener("click", event => {
+          if (event.target.closest("[data-timeline-card]")) return;
+          setSelected(el.dataset.card, "detail");
+        });
+      });
+      document.querySelectorAll("[data-timeline-card]").forEach(button => {
+        button.addEventListener("click", event => {
+          event.stopPropagation();
+          focusCardOnTimeline(button.dataset.timelineCard);
+        });
       });
     }
 
@@ -2257,39 +4217,62 @@
         return;
       }
 
-      const lower = query.toLowerCase();
-      const titleMatches = allCards.filter(card => card.title.toLowerCase().includes(lower));
-      const titleIds = new Set(titleMatches.map(card => card.id));
-      const contentMatches = allCards.filter(card => !titleIds.has(card.id) && textForSearch(card).includes(lower));
+      const terms = expandedSearchTerms(query);
+      const matches = allCards.map(card => searchMatch(card, query, terms)).filter(Boolean);
+      const titleMatches = matches.filter(item => item.section === "title");
+      const contentMatches = matches.filter(item => item.section === "content");
       const groups = {
-        all: [
-          ...titleMatches.map(card => ({ card, mode: "title" })),
-          ...contentMatches.map(card => ({ card, mode: "content" }))
-        ],
-        title: titleMatches.map(card => ({ card, mode: "title" })),
-        content: contentMatches.map(card => ({ card, mode: "content" }))
+        all: matches,
+        title: titleMatches,
+        content: contentMatches
       };
       const labels = [
         ["all", `全部 ${groups.all.length}`],
         ["title", `标题匹配 ${groups.title.length}`],
         ["content", `内容匹配 ${groups.content.length}`]
       ];
-      const visibleResults = groups[activeSearchFilter] || groups.all;
+      const visibleResults = sortSearchItems(groups[activeSearchFilter] || groups.all);
+      const aliasTerms = terms.slice(1);
 
-      meta.textContent = `“${query}”共找到 ${titleMatches.length + contentMatches.length} 张相关卡片`;
+      meta.textContent = `“${query}”共找到 ${matches.length} 张相关卡片${aliasTerms.length ? `，同时检索：${aliasTerms.join("、")}` : ""}`;
       filterContainer.innerHTML = labels.map(([key, label]) => (
         `<button type="button" class="${activeSearchFilter === key ? "active" : ""}" data-search-filter="${key}">${label}</button>`
       )).join("");
-      resultContainer.innerHTML = visibleResults.length
-        ? visibleResults.map(item => resultCard(item.card, query, item.mode)).join("")
-        : `<div class="card empty">当前筛选没有结果</div>`;
+      if (visibleResults.length) {
+        resultContainer.innerHTML = visibleResults.map(item => resultCard(item, query)).join("");
+      } else if (!matches.length) {
+        const suggestions = searchSuggestions(query);
+        resultContainer.innerHTML = suggestions.length ? `
+          <section class="card search-suggestions">
+            <h3>没有直接结果，试试这些相近标题</h3>
+            <div class="suggestion-list">
+              ${suggestions.map(card => `<button class="search-suggestion" type="button" data-search-suggestion="${htmlEscape(card.title)}">${htmlEscape(card.title)}</button>`).join("")}
+            </div>
+          </section>
+        ` : `<div class="card empty">没有找到相关卡片，可以尝试更短的关键词</div>`;
+      } else {
+        resultContainer.innerHTML = `<div class="card empty">当前筛选没有结果</div>`;
+      }
       filterContainer.querySelectorAll("[data-search-filter]").forEach(btn => {
         btn.addEventListener("click", () => {
           activeSearchFilter = btn.dataset.searchFilter;
           renderSearch();
         });
       });
+      resultContainer.querySelectorAll("[data-search-suggestion]").forEach(button => {
+        button.addEventListener("click", () => {
+          currentQuery = button.dataset.searchSuggestion;
+          activeSearchFilter = "all";
+          activeSearchSort = "relevance";
+          searchInput.value = currentQuery;
+          searchSort.value = activeSearchSort;
+          updateSearchClear();
+          renderSearch();
+          syncUrl("replace");
+        });
+      });
       bindResultClicks();
+      scheduleUrlSync();
     }
 
     function cardHallTypes() {
@@ -2389,6 +4372,7 @@
       resultContainer.querySelectorAll("[data-card]").forEach(el => {
         el.addEventListener("click", () => setSelected(el.dataset.card, "detail"));
       });
+      scheduleUrlSync();
     }
 
     function renderFilters() {
@@ -2522,19 +4506,6 @@
       windowEl.style.width = `${Math.max(2, visibleWidth / axisWidth * 100)}%`;
     }
 
-    function yearAtTimelinePixel(pixel) {
-      const ratio = Math.max(0, Math.min(1, pixel / axisWidthEstimate()));
-      return new Date(timelineStart + ratio * (timelineEnd - timelineStart)).getFullYear();
-    }
-
-    function updateViewportYears() {
-      const axisLeft = Math.max(0, timelineFrame.scrollLeft - 70);
-      const axisRight = Math.max(axisLeft, Math.min(axisWidthEstimate(), timelineFrame.scrollLeft + timelineFrame.clientWidth - 70));
-      const startYear = yearAtTimelinePixel(axisLeft);
-      const endYear = yearAtTimelinePixel(axisRight);
-      viewportYears.textContent = startYear === endYear ? `当前视窗 ${startYear}` : `当前视窗 ${startYear}—${endYear}`;
-    }
-
     function jumpToYear(value) {
       const minYear = new Date(timelineStart).getFullYear();
       const maxYear = new Date(timelineEnd).getFullYear();
@@ -2551,7 +4522,6 @@
       timelineFrame.scrollLeft = Math.max(0, 70 + ratio * axisWidthEstimate() - timelineFrame.clientWidth / 2);
       yearJumpInput.value = year;
       updateDensityWindow();
-      updateViewportYears();
     }
 
     function renderDensityNavigator(sourceCards) {
@@ -2811,6 +4781,7 @@
         label.addEventListener("click", () => setSelected(card.id, "detail"));
         timelineCanvas.appendChild(label);
       });
+      scheduleUrlSync();
     }
 
     function relationClass(kind) {
@@ -2826,9 +4797,116 @@
       return lines.map(line => `<p>${line}</p>`).join("");
     }
 
+    function cardPermalink(id) {
+      const url = new URL(window.location.href);
+      url.hash = new URLSearchParams({ card: id }).toString();
+      return url.href;
+    }
+
+    async function copyLink(text, button) {
+      let copied = false;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        }
+      } catch (_error) {}
+      if (!copied) {
+        const helper = document.createElement("textarea");
+        helper.value = text;
+        helper.setAttribute("readonly", "");
+        helper.style.position = "fixed";
+        helper.style.opacity = "0";
+        document.body.appendChild(helper);
+        helper.select();
+        copied = document.execCommand("copy");
+        helper.remove();
+      }
+      const original = button.textContent;
+      button.textContent = copied ? "已复制" : "请复制地址栏";
+      window.setTimeout(() => { button.textContent = original; }, 1600);
+    }
+
+    function centerTimelineCard(id) {
+      const card = timelineById[id];
+      if (!card) return;
+      const x = semanticPointX(card);
+      timelineFrame.scrollLeft = Math.max(0, x - timelineFrame.clientWidth / 2);
+      updateDensityWindow();
+    }
+
+    function focusCardOnTimeline(id) {
+      const card = timelineById[id];
+      if (!card) return;
+      selectedId = id;
+      timelineFocusId = id;
+      activeTags.clear();
+      activeCountryQuery = "";
+      countryFilter.value = "";
+      activeLevels = new Set([card.level]);
+      const requiredZoom = semanticRequiredZoom(card, timelineCards);
+      zoom = Math.max(zoom, Math.min(8, requiredZoom + .2));
+      zoomSlider.value = zoom;
+      renderFilters();
+      renderLevelFilters();
+      showView("timeline", { historyMode: "push", preserveScroll: true });
+      zoomReadout.textContent = `${Math.round(zoom * 100)}% · ${semanticLevelText()}`;
+      requestAnimationFrame(() => {
+        centerTimelineCard(id);
+        syncUrl("replace");
+      });
+    }
+
+    const sourceRegistry = [
+      { keys: ["1914-1918 online", "1914–1918 online", "1914-1918-online"], type: "百科", url: "https://encyclopedia.1914-1918-online.net/home.html" },
+      { keys: ["german history in documents and images", "german history documents and images", "ghdi"], type: "文献", url: "https://ghdi.ghi-dc.org/" },
+      { keys: ["deutsches historisches museum", "dhm/lemo", "lemo"], type: "博物馆", url: "https://www.dhm.de/lemo/" },
+      { keys: ["united states holocaust memorial museum", "ushmm", "holocaust encyclopedia"], type: "博物馆", url: "https://encyclopedia.ushmm.org/" },
+      { keys: ["encyclopaedia britannica", "britannica"], type: "百科", url: "https://www.britannica.com/" },
+      { keys: ["imperial war museums", "imperial war museum", "iwm"], type: "博物馆", url: "https://www.iwm.org.uk/" },
+      { keys: ["the national archives", "uk national archives"], type: "档案馆", url: "https://www.nationalarchives.gov.uk/" },
+      { keys: ["avalon project"], type: "文献", url: "https://avalon.law.yale.edu/" },
+      { keys: ["bundesarchiv", "德国联邦档案馆"], type: "档案馆", url: "https://www.bundesarchiv.de/" },
+      { keys: ["united nations", "联合国"], type: "机构", url: "https://www.un.org/" }
+    ];
+
+    function sourceInfo(text) {
+      const directUrl = String(text).match(/https?:\/\/[^\s；]+/i)?.[0];
+      if (directUrl) return { type: "网页", url: directUrl, label: "打开来源" };
+      const lower = String(text).toLowerCase();
+      const known = sourceRegistry.find(source => source.keys.some(key => lower.includes(key)));
+      if (known) return { type: known.type, url: known.url, label: "官方入口" };
+      if (/《|\bpress\b|university|出版社|第\s*\d+\s*页|\bpp?\./i.test(text)) return { type: "书籍", url: "", label: "" };
+      return { type: "资料", url: "", label: "" };
+    }
+
+    function renderSources(card) {
+      const sourceValue = fieldValue(card, "出处");
+      const noteValue = fieldValue(card, "资料备注");
+      if (!sourceValue && !noteValue) return "";
+      const sources = String(sourceValue || "").split(/[；\n]+/).map(value => value.trim()).filter(Boolean);
+      return `
+        <section class="sources-section">
+          <h2>资料来源</h2>
+          <div class="source-list">
+            ${sources.length ? sources.map(source => {
+              const info = sourceInfo(source);
+              return `<article class="source-item">
+                <span class="source-type">${info.type}</span>
+                <span class="source-text">${htmlEscape(source)}</span>
+                ${info.url ? `<a class="source-link" href="${info.url}" target="_blank" rel="noopener noreferrer">${info.label} ↗</a>` : ""}
+              </article>`;
+            }).join("") : `<div class="card empty">暂无明确出处</div>`}
+          </div>
+          ${noteValue ? `<div class="source-note"><strong>资料备注：</strong>${htmlEscape(noteValue)}</div>` : ""}
+        </section>
+      `;
+    }
+
     function renderDetail() {
       const card = byId[selectedId] || allCards[0];
-      const hiddenLabels = new Set(["标题", "分级", "类型", "主标签", "副标签", "一句话概括"]);
+      const timelineCard = timelineById[card.id];
+      const hiddenLabels = new Set(["标题", "分级", "类型", "主标签", "副标签", "一句话概括", "出处", "资料备注"]);
       const bodyFields = (card.fields || []).filter(field => !hiddenLabels.has(field.label));
       const detailArticle = document.getElementById("detail-article");
       detailArticle.style.setProperty("--main-color", tagColor(card.mainTag));
@@ -2840,6 +4918,11 @@
         </div>
         <h1>${card.title}</h1>
         <div class="summary">${card.summary}</div>
+        <div class="detail-actions">
+          ${timelineCard ? `<button class="detail-action primary" id="detail-show-timeline" type="button">在时间轴中查看</button>` : ""}
+          ${mapCardLocations[card.id] ? `<button class="detail-action" id="detail-show-map" type="button">在地图中查看</button>` : ""}
+          <button class="detail-action" id="detail-copy-link" type="button">复制链接</button>
+        </div>
         <div class="detail-grid">
           ${bodyFields.map(field => `
             <section class="card detail-box ${field.value.length > 80 || field.value.includes("\n") ? "wide" : ""}">
@@ -2848,7 +4931,12 @@
             </section>
           `).join("")}
         </div>
+        ${renderSources(card)}
       `;
+
+      document.getElementById("detail-show-timeline")?.addEventListener("click", () => focusCardOnTimeline(card.id));
+      document.getElementById("detail-show-map")?.addEventListener("click", () => focusCardOnMap(card.id));
+      document.getElementById("detail-copy-link")?.addEventListener("click", event => copyLink(cardPermalink(card.id), event.currentTarget));
 
       const relations = card.relations || [];
       const relationItems = card.relationItems || [];
@@ -2909,15 +4997,17 @@
     }, { passive: false });
     timelineFrame.addEventListener("scroll", () => {
       updateDensityWindow();
-      updateViewportYears();
+      scheduleUrlSync();
     });
     yearJumpForm.addEventListener("submit", event => {
       event.preventDefault();
       jumpToYear(yearJumpInput.value);
     });
-    document.querySelectorAll(".era-shortcut[data-year]").forEach(button => {
-      button.addEventListener("click", () => jumpToYear(button.dataset.year));
+    copyTimelineLink.addEventListener("click", event => {
+      syncUrl("replace");
+      copyLink(window.location.href, event.currentTarget);
     });
+    window.addEventListener("popstate", applyRouteFromUrl);
 
     let gestureStartZoom = zoom;
     timelineFrame.addEventListener("gesturestart", event => {
@@ -2951,9 +5041,11 @@
     renderTimeline();
     yearJumpInput.min = new Date(timelineStart).getFullYear();
     yearJumpInput.max = new Date(timelineEnd).getFullYear();
-    updateViewportYears();
     renderDetail();
     setZoom(zoom);
+    urlReady = true;
+    applyRouteFromUrl();
+    if (!window.location.hash) syncUrl("replace");
   </script>
 </body>
 </html>

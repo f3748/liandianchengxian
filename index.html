@@ -1933,6 +1933,18 @@
 
     .country-map-label.minor { font-size: 11px; }
 
+    .country-map-label.ww1-occupation-label {
+      padding: 3px 6px;
+      border: 1px dashed rgba(119, 57, 49, .78);
+      border-radius: 5px;
+      background: rgba(255, 246, 231, .9);
+      color: #783f38;
+      text-shadow: none;
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 760;
+    }
+
     .city-map-label {
       font-size: 11px;
       font-weight: 700;
@@ -1954,6 +1966,23 @@
       border-radius: 1px;
       box-shadow: 0 1px 2px rgba(31, 36, 33, .12);
       flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      font: 700 8px/1 Georgia, serif;
+      text-shadow: 0 0 1px rgba(31, 36, 33, .25);
+    }
+
+    .map-flag-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex: 0 0 auto;
+    }
+
+    .map-flag-group .map-flag {
+      width: 16px;
+      height: 10px;
     }
 
     .map-focus-marker {
@@ -2162,7 +2191,7 @@
             <div class="map-time-head">
               <div>
                 <h1>地图时间轴</h1>
-                <p>拖动日期观察国界和政治实体名称变化；本阶段覆盖1918—1949年。</p>
+                <p>拖动日期观察国界和政治实体名称变化；本阶段覆盖1815—1949年。</p>
               </div>
               <div class="map-date-tools">
                 <button class="map-stage-button" id="map-prev-stage" type="button">← 上一处变化</button>
@@ -2172,9 +2201,9 @@
             </div>
             <input class="map-time-range" id="map-time-range" type="range" aria-label="历史地图日期" />
             <div class="map-time-ticks" aria-hidden="true">
-              <span>1918</span><span>1920</span><span>1930</span><span>1938</span><span>1945</span><span>1949</span>
+              <span>1815</span><span>1880</span><span>1900</span><span>1914</span><span>1930</span><span>1945</span><span>1949</span>
             </div>
-            <div class="map-credit">世界边界：<a href="https://github.com/aourednik/historical-basemaps" target="_blank" rel="noopener noreferrer">Historical Basemaps</a>（GPL-3.0）；1938—1945欧洲战时阶段：<a href="https://web.stanford.edu/group/spatialhistory/cgi-bin/site/project.php?id=1015" target="_blank" rel="noopener noreferrer">斯坦福历史空间实验室</a>。战时图按关键阶段切换，不代表逐日军事前线。</div>
+            <div class="map-credit">世界边界：<a href="https://github.com/aourednik/historical-basemaps" target="_blank" rel="noopener noreferrer">Historical Basemaps</a>（GPL-3.0）；一战阶段核对：<a href="https://dhc.westpoint.edu/atlases/" target="_blank" rel="noopener noreferrer">西点军校一战地图集</a>；二战欧洲阶段：<a href="https://web.stanford.edu/group/spatialhistory/cgi-bin/site/project.php?id=1015" target="_blank" rel="noopener noreferrer">斯坦福历史空间实验室</a>。战时图按关键阶段切换，不代表逐日军事前线。</div>
           </div>
         </div>
       </section>
@@ -2321,6 +2350,12 @@
     let mapCityLabelMarkers = [];
     let mapFocusMarkers = [];
     let currentMapSnapshot = "";
+    let currentDatedWorldStage = "";
+    let currentHistoricalMilestoneKey = "";
+    let currentWw1SnapshotKey = "";
+    let currentWw1SuccessorKey = "";
+    let currentWorldWw2Stage = "";
+    let currentWorldWw2OccupationStage = "";
     let currentWw2Snapshot = "";
     let pendingMapCamera = null;
     let mapDataLoadPromise = null;
@@ -2611,13 +2646,25 @@
       return (card.fields || []).find(field => field.label === label)?.value || "";
     }
 
-    const MAP_MIN_DATE = Date.UTC(1918, 0, 1);
+    const MAP_MIN_DATE = Date.UTC(1815, 5, 9);
     const MAP_MAX_DATE = Date.UTC(1949, 11, 31);
     const DAY_MS = 24 * 60 * 60 * 1000;
     const mapStageDates = [
-      "1918-11-11", "1920-01-01", "1930-01-01", "1938-04-01", "1939-03-15",
-      "1939-10-06", "1940-06-25", "1941-04-18", "1942-01-01", "1943-01-01",
-      "1943-09-08", "1944-08-25", "1945-05-08", "1949-05-23", "1949-10-07"
+      "1815-06-09", "1830-02-03", "1830-10-04", "1858-06-22", "1861-03-17", "1862-01-24",
+      "1866-10-12", "1867-06-08", "1870-09-20", "1871-01-01", "1871-01-18", "1878-07-13",
+      "1880-01-01", "1896-05-11", "1900-01-01", "1905-06-07", "1908-10-05", "1910-08-29",
+      "1912-01-01", "1913-08-10", "1914-07-28", "1914-09-15",
+      "1915-09-30", "1915-12-01", "1916-01-25", "1917-01-07", "1917-03-15",
+      "1917-11-07", "1917-11-12", "1917-12-06", "1918-02-16", "1918-02-24",
+      "1918-03-03", "1918-05-26", "1918-05-28", "1918-07-18", "1918-09-25",
+      "1918-10-24", "1918-10-28", "1918-10-31", "1918-11-11", "1918-11-12",
+      "1918-11-18", "1918-12-01",
+      "1920-01-01", "1922-12-06", "1923-10-29", "1930-01-01", "1932-03-01", "1932-09-23",
+      "1932-10-03", "1936-05-09", "1938-04-01", "1939-03-15", "1939-10-06", "1940-03-13",
+      "1940-06-25", "1940-08-06", "1940-09-22", "1941-04-18", "1941-12-08", "1941-12-10", "1941-12-25", "1942-03-09", "1942-04-01",
+      "1942-05-10", "1943-04-01", "1943-09-08", "1944-04-01", "1944-07-21", "1944-08-25", "1945-04-01",
+      "1945-05-08", "1945-07-05", "1945-08-30", "1945-09-02", "1946-05-03", "1946-05-25", "1946-07-04", "1947-08-14", "1947-08-15",
+      "1948-01-04", "1948-02-04", "1948-05-14", "1949-04-26", "1949-05-23", "1949-07-20", "1949-10-01", "1949-10-07", "1949-12-07", "1949-12-27"
     ].map(value => Date.parse(value));
     const mapTimeRange = document.getElementById("map-time-range");
     const mapCurrentDate = document.getElementById("map-current-date");
@@ -2786,6 +2833,20 @@
     const historicalCountryNames = {
       "German Empire": "德意志帝国",
       "Germany": "德国",
+      "Prussia": "普鲁士王国",
+      "Austrian Empire": "奥地利帝国",
+      "Austria Hungary": "奥匈帝国",
+      "Kingdom of Italy": "意大利王国",
+      "Kingdom of the Two Sicilies": "两西西里王国",
+      "Kingdom of Sardinia": "撒丁王国",
+      "Papal States": "教皇国",
+      "Bavaria": "巴伐利亚王国",
+      "Württemberg": "符腾堡王国",
+      "Hanover": "汉诺威王国",
+      "Sweden–Norway": "瑞典-挪威联盟",
+      "Imperial Japan": "日本帝国",
+      "Bosnia-Herzegovina": "波斯尼亚和黑塞哥维那",
+      "Korea": "朝鲜",
       "East Prussia": "东普鲁士",
       "France": "法国",
       "United Kingdom of Great Britain and Ireland": "英国",
@@ -2797,6 +2858,13 @@
       "Hungary": "匈牙利",
       "Ottoman Empire": "奥斯曼帝国",
       "Ottoman Sultanate": "奥斯曼苏丹国",
+      "British India": "英属印度",
+      "Manchukuo": "满洲国（日占傀儡政权）",
+      "Transjordan (GB)": "英属外约旦",
+      "Korea (Japan)": "朝鲜（日占）",
+      "People's Republic of China": "中华人民共和国",
+      "Republic of China (Taiwan)": "中华民国（台湾）",
+      "Occupied Poland": "被德苏占领的波兰",
       "Poland": "波兰",
       "Czechoslovakia": "捷克斯洛伐克",
       "Yugoslavia": "南斯拉夫",
@@ -2979,7 +3047,7 @@
       "Union of South Africa": "南非联邦",
       "United States Virgin Islands": "美属维尔京群岛",
       "Uruguay": "乌拉圭",
-      "USSR": "苏维埃俄国",
+      "USSR": "苏联",
       "Venezuela": "委内瑞拉",
       "Wallis and Futuna Islands": "瓦利斯和富图纳群岛",
       "Xinjiang": "新疆",
@@ -2999,7 +3067,7 @@
       ,"Algeria (France)": "法属阿尔及利亚"
       ,"Morocco (France)": "法属摩洛哥"
       ,"Siam": "暹罗"
-      ,"Jordan": "外约旦"
+      ,"Jordan": "约旦"
       ,"Israel": "以色列"
       ,"Eritrea (Italy)": "意属厄立特里亚"
       ,"Ethiopia (Italy)": "意占埃塞俄比亚"
@@ -3119,12 +3187,23 @@
       "German Empire", "Germany", "France", "United Kingdom of Great Britain and Ireland", "United Kingdom",
       "Russian Empire", "USSR", "Austro-Hungarian Empire", "Ottoman Empire", "Ottoman Sultanate", "Turkey",
       "United States of America", "United States", "China", "Republic of China", "Chinese Warlords", "Chinese warlords",
-      "Japan", "Empire of Japan", "Japan (USA)", "British India", "British Raj"
+      "Japan", "Empire of Japan", "Imperial Japan", "Japan (USA)", "British India", "British Raj", "Kingdom of Italy",
+      "Prussia", "Austrian Empire", "Austria Hungary", "Manchu Empire", "Spain", "Portugal",
+      "Kingdom of the Two Sicilies", "Kingdom of Sardinia"
     ]);
 
     const historicalLabelAnchors = {
       "United Kingdom of Great Britain and Ireland": [-2.4, 54.5],
       "Russian Empire": [55, 57],
+      "Austrian Empire": [17, 48],
+      "Austria Hungary": [18, 47],
+      "Kingdom of Italy": [12.6, 42.4],
+      "Prussia": [13.5, 52.5],
+      "Manchu Empire": [104, 37],
+      "Imperial Japan": [138, 37],
+      "Kingdom of the Two Sicilies": [15.4, 40.5],
+      "Kingdom of Sardinia": [8.4, 44.5],
+      "Sweden–Norway": [15, 62],
       "USSR": [58, 56],
       "Soviet Union": [48, 57],
       "White Russia": [27.8, 53.5],
@@ -3178,6 +3257,11 @@
     };
 
     const preparedMapSnapshots = {};
+    const preparedDatedMapSnapshots = {};
+    const preparedHistoricalMilestoneSnapshots = {};
+    const preparedWw1Snapshots = {};
+    const preparedWw1SuccessorSnapshots = {};
+    const preparedWorldWw2Snapshots = {};
     const preparedWw2Snapshots = {};
 
     function clampMapDate(value) {
@@ -3194,10 +3278,13 @@
     }
 
     function mapSnapshotForDate(value = mapDateValue) {
+      if (value < Date.UTC(1880, 0, 1)) return "1815";
+      if (value < Date.UTC(1900, 0, 1)) return "1880";
+      if (value < Date.UTC(1914, 0, 1)) return "1900";
       if (value < Date.UTC(1920, 0, 1)) return "1914";
       if (value < Date.UTC(1930, 0, 1)) return "1920";
       if (value < Date.UTC(1938, 0, 1)) return "1930";
-      if (value < Date.UTC(1945, 4, 8)) return "1938";
+      if (value < Date.UTC(1945, 8, 2)) return "1938";
       return "1945";
     }
 
@@ -3205,12 +3292,15 @@
       if (value < Date.UTC(1938, 3, 1) || value >= Date.UTC(1945, 4, 8)) return "";
       if (value < Date.UTC(1939, 2, 15)) return "1938";
       if (value < Date.UTC(1939, 9, 6)) return "1939";
+      if (value < Date.UTC(1940, 3, 1)) return "1939-poland";
       if (value < Date.UTC(1940, 5, 25)) return "1940";
       if (value < Date.UTC(1941, 3, 18)) return "1940-summer";
-      if (value < Date.UTC(1942, 0, 1)) return "1941";
-      if (value < Date.UTC(1943, 0, 1)) return "1942";
+      if (value < Date.UTC(1942, 3, 1)) return "1941";
+      if (value < Date.UTC(1943, 3, 1)) return "1942";
       if (value < Date.UTC(1943, 8, 8)) return "1943";
+      if (value < Date.UTC(1944, 3, 1)) return "1943-italy";
       if (value < Date.UTC(1944, 7, 25)) return "1944";
+      if (value < Date.UTC(1945, 3, 1)) return "1944-liberation";
       return "1945";
     }
 
@@ -3268,7 +3358,8 @@
 
     function prepareMapSnapshot(year) {
       if (preparedMapSnapshots[year]) return preparedMapSnapshots[year];
-      const raw = window.HISTORICAL_MAP_DATA?.[year] || { type: "FeatureCollection", features: [] };
+      if (!window.HISTORICAL_MAP_DATA?.[year]) return { data: { type: "FeatureCollection", features: [] }, labels: [] };
+      const raw = window.HISTORICAL_MAP_DATA[year];
       const data = {
         type: "FeatureCollection",
         features: raw.features.map(feature => {
@@ -3299,26 +3390,377 @@
       return preparedMapSnapshots[year];
     }
 
+    const datedWorldChangeDates = [
+      "1908-10-05", "1910-08-29", "1922-12-06", "1923-10-29", "1932-03-01", "1932-09-23",
+      "1932-10-03", "1945-09-02", "1946-05-03", "1946-05-25", "1946-07-04", "1947-08-14",
+      "1947-08-15", "1948-01-04", "1948-02-04", "1948-05-14", "1949-04-26", "1949-07-20",
+      "1949-10-01", "1949-12-07", "1949-12-27"
+    ].map(value => Date.parse(value));
+
+    function datedWorldStageForDate(value = mapDateValue) {
+      return String(datedWorldChangeDates.filter(date => value >= date).at(-1) || 0);
+    }
+
+    function prepareDatedMapSnapshot(year, value = mapDateValue) {
+      const cacheKey = `${year}:${datedWorldStageForDate(value)}`;
+      if (preparedDatedMapSnapshots[cacheKey]) return preparedDatedMapSnapshots[cacheKey];
+      const source = prepareMapSnapshot(year);
+      const active = source.data.features.filter(feature => {
+        const start = feature.properties.ACTIVE_FROM ? Date.parse(`${feature.properties.ACTIVE_FROM}T00:00:00Z`) : -Infinity;
+        const end = feature.properties.ACTIVE_UNTIL ? Date.parse(`${feature.properties.ACTIVE_UNTIL}T00:00:00Z`) : Infinity;
+        return value >= start && value < end;
+      }).filter(feature => !(year === "1930" && feature.properties.NAME === "Hejaz" && value >= Date.UTC(1932, 8, 23)));
+      const data = {
+        type: "FeatureCollection",
+        features: active.map(feature => {
+          const properties = { ...feature.properties };
+          const originalName = properties.NAME;
+          let effectiveName = originalName;
+          let displayName = properties.nameZh;
+          let controller = properties.SUBJECTO || properties.PARTOF || originalName;
+
+          if (year === "1900" && originalName === "Bosnia-Herzegovina" && value >= Date.UTC(1908, 9, 5)) {
+            controller = "Austro-Hungarian Empire";
+            displayName = "波斯尼亚和黑塞哥维那（奥匈吞并）";
+          } else if (year === "1900" && originalName === "Korea" && value >= Date.UTC(1910, 7, 29)) {
+            effectiveName = "Korea (Japan)";
+            controller = "Empire of Japan";
+            displayName = "朝鲜（日占）";
+          } else if (year === "1920" && originalName === "United Kingdom of Great Britain and Ireland" && value >= Date.UTC(1922, 11, 6)) {
+            effectiveName = "United Kingdom";
+            displayName = "英国";
+          } else if (year === "1920" && originalName === "Ottoman Sultanate" && value >= Date.UTC(1923, 9, 29)) {
+            effectiveName = "Turkey";
+            controller = "Turkey";
+            displayName = "土耳其共和国";
+          } else if (year === "1930" && originalName === "Manchuria" && value >= Date.UTC(1932, 2, 1)) {
+            effectiveName = "Manchukuo";
+            controller = "Empire of Japan";
+            displayName = "满洲国（日占傀儡政权）";
+          } else if (year === "1930" && originalName === "Mesopotamia (GB)" && value >= Date.UTC(1932, 9, 3)) {
+            effectiveName = "Iraq";
+            controller = "Iraq";
+            displayName = "伊拉克王国";
+          } else if (year === "1945" && originalName === "Philippines") {
+            if (value >= Date.UTC(1946, 6, 4)) {
+              controller = "Philippines";
+              displayName = "菲律宾共和国";
+            } else displayName = "菲律宾（美国主权）";
+          } else if (year === "1945" && originalName === "Burma") {
+            if (value >= Date.UTC(1948, 0, 4)) {
+              controller = "Burma";
+              displayName = "缅甸联邦";
+            } else displayName = "英属缅甸";
+          } else if (year === "1945" && originalName === "Ceylon") {
+            if (value >= Date.UTC(1948, 1, 4)) {
+              controller = "Ceylon";
+              displayName = "锡兰自治领";
+            } else displayName = "英属锡兰";
+          } else if (year === "1945" && originalName === "Transjordan (GB)" && value >= Date.UTC(1946, 4, 25)) {
+            if (value >= Date.UTC(1949, 3, 26)) {
+              effectiveName = "Jordan";
+              controller = "Jordan";
+              displayName = "约旦哈希姆王国";
+            } else {
+              effectiveName = "Hashemite Kingdom of Transjordan";
+              controller = "Hashemite Kingdom of Transjordan";
+              displayName = "外约旦哈希姆王国";
+            }
+          } else if (year === "1945" && originalName === "Dutch East Indies") {
+            if (value >= Date.UTC(1949, 11, 27)) {
+              effectiveName = "Indonesia";
+              controller = "Indonesia";
+              displayName = "印度尼西亚";
+            } else if (value >= Date.UTC(1945, 7, 17)) displayName = "荷属东印度／印度尼西亚独立战争";
+          } else if (year === "1945" && originalName === "Mandatory Palestine (GB)" && value >= Date.UTC(1948, 4, 14)) {
+            displayName = "巴勒斯坦战争地区（以色列已成立，边界未定）";
+          } else if (year === "1945" && originalName === "Manchuria") {
+            if (value >= Date.UTC(1946, 4, 3)) {
+              controller = "China";
+              displayName = "中华民国东北地区";
+            } else displayName = "苏军占领下的满洲";
+          } else if (year === "1945" && originalName === "China" && value >= Date.UTC(1949, 9, 1)) {
+            effectiveName = "People's Republic of China";
+            controller = "People's Republic of China";
+            displayName = "中华人民共和国";
+          } else if (year === "1945" && originalName === "Taiwan" && value >= Date.UTC(1949, 9, 1)) {
+            effectiveName = "Republic of China (Taiwan)";
+            controller = "Republic of China (Taiwan)";
+            displayName = "中华民国（台湾）";
+          }
+
+          properties.NAME = effectiveName;
+          properties.SUBJECTO = controller;
+          properties.PARTOF = controller;
+          properties.nameZh = displayName || historicalCountryNames[effectiveName] || historicalCountryNames[originalName] || "";
+          properties.color = stableMapColor(controller || effectiveName);
+          return { ...feature, properties };
+        })
+      };
+      const labelsByName = new Map();
+      data.features.forEach(feature => {
+        const key = feature.properties.NAME;
+        const existing = labelsByName.get(key);
+        if (!existing || feature.properties.labelArea > existing.properties.labelArea) labelsByName.set(key, feature);
+      });
+      const snapshot = { data, labels: Array.from(labelsByName.values()) };
+      preparedDatedMapSnapshots[cacheKey] = snapshot;
+      return snapshot;
+    }
+
+    const historicalMilestoneDefinitions = [
+      { id: "greece-1830", start: "1830-02-03", end: "1880-01-01", source: "1880", names: ["Greece"], title: "希腊独立", note: "1830年希腊获得国际承认 · 1880轮廓局部近似" },
+      { id: "belgium-1830", start: "1830-10-04", end: "1880-01-01", source: "1880", names: ["Belgium", "Netherlands"], suppress: ["United Kingdom of Netherlands"], title: "比利时脱离荷兰", note: "1830年比利时宣布独立 · 荷比边界以1880轮廓近似" },
+      { id: "italy-1861", start: "1861-03-17", end: "1880-01-01", source: "1880", names: ["Kingdom of Italy"], suppress: ["Kingdom of the Two Sicilies", "Kingdom of Sardinia", "Lombardy", "Parma", "Tuscany", "Modena", "Massa"], title: "意大利统一进程", note: "1861年意大利王国成立；威尼托与罗马分别在1866、1870年并入，轮廓为阶段近似" },
+      { id: "venetia-remnant", start: "1861-03-17", end: "1866-10-12", source: "1815", names: ["Venetia"], title: "意大利统一进程", note: "威尼托仍属奥地利，至1866年10月并入意大利" },
+      { id: "papal-remnant", start: "1861-03-17", end: "1870-09-20", source: "1815", names: ["Papal States"], title: "意大利统一进程", note: "教皇国残余地区仍未并入意大利；沿用1815轮廓作近似提示" },
+      { id: "romania-1862", start: "1862-01-24", end: "1880-01-01", source: "1880", names: ["Romania"], title: "罗马尼亚形成", note: "摩尔达维亚与瓦拉几亚联合后的罗马尼亚 · 1880轮廓近似" },
+      { id: "austria-hungary-1867", start: "1867-06-08", end: "1880-01-01", source: "1880", names: ["Austro-Hungarian Empire"], suppress: ["Austrian Empire"], title: "奥匈双元体制", note: "1867年奥匈折衷后的双元君主国 · 1880轮廓近似" },
+      { id: "german-empire-1871", start: "1871-01-01", end: "1880-01-01", source: "1880", names: ["German Empire"], suppress: ["Palatinate", "Hohenzollern", "Baden", "Saxony", "Prussia", "Mecklenburg-Strelitz", "Grand Duchy of Hesse", "Nassau", "Wetzlar", "Waldeck", "Lippe-Detmold", "Brunswick", "Anhalt", "Mecklenburg-Schwerin", "Thuringia", "Lübeck", "Oldenburg", "Hanover", "Electoral Hesse", "Bremen", "Cuxhaven", "Schleswig", "Holstein", "Hamburg", "Schaumburg-Lippe", "Bavaria", "Württemberg"], title: "德意志帝国成立", note: "1871年统一；阿尔萨斯—洛林在5月《法兰克福条约》后才正式割让" },
+      { id: "france-before-frankfurt", start: "1871-01-01", end: "1871-05-10", source: "1815", names: ["France"], title: "德意志统一与法德边界", note: "1871年5月10日前仍以战前法德边界作近似" },
+      { id: "berlin-1878", start: "1878-07-13", end: "1880-01-01", source: "1880", names: ["Serbia", "Montenegro", "Romania", "Bulgaria"], title: "柏林会议后的巴尔干", note: "塞尔维亚、黑山、罗马尼亚独立，保加利亚自治 · 1880轮廓近似" },
+      { id: "norway-1905", start: "1905-06-07", end: "1914-01-01", source: "1914", names: ["Norway", "Sweden"], suppress: ["Sweden–Norway"], title: "挪威—瑞典联合解体", note: "1905年挪威结束与瑞典的联合 · 使用1914轮廓" },
+      { id: "republic-china-1912", start: "1912-01-01", end: "1914-01-01", source: "1914", names: ["Republic of China"], suppress: ["Manchu Empire"], title: "中华民国成立", note: "1912年清朝结束 · 使用1914中国轮廓近似" },
+      { id: "balkan-wars-1913", start: "1913-08-10", end: "1914-01-01", source: "1914", names: ["Albania", "Greece", "Serbia", "Montenegro", "Bulgaria"], title: "巴尔干战争后的东南欧", note: "1913年《布加勒斯特条约》后阶段 · 使用1914轮廓" },
+      { id: "ireland-1922", start: "1922-12-06", end: "1938-01-01", source: "1938", names: ["Ireland"], title: "爱尔兰自由邦成立", note: "1922年爱尔兰自由邦成立 · 北爱尔兰仍属英国" },
+      { id: "saudi-1932", start: "1932-09-23", end: "1938-01-01", source: "1938", names: ["Saudi Arabia"], suppress: ["Hejaz"], title: "沙特阿拉伯统一", note: "1932年沙特阿拉伯王国成立 · 使用1938轮廓" },
+      { id: "ethiopia-1936", start: "1936-05-09", end: "1938-01-01", source: "1938", names: ["Ethiopia (Italy)"], suppress: ["Ethiopia"], title: "意大利吞并埃塞俄比亚", note: "1936年意大利宣布吞并；国际承认存在争议" }
+    ].map(item => ({ ...item, startValue: Date.parse(item.start), endValue: Date.parse(item.end) }));
+
+    function activeHistoricalMilestones(value = mapDateValue) {
+      return historicalMilestoneDefinitions.filter(item => value >= item.startValue && value < item.endValue);
+    }
+
+    function historicalMilestoneKey(value = mapDateValue) {
+      return activeHistoricalMilestones(value).map(item => item.id).join("|");
+    }
+
+    function historicalMilestoneSuppressedNames(value = mapDateValue) {
+      return new Set(activeHistoricalMilestones(value).flatMap(item => item.suppress || []));
+    }
+
+    function prepareHistoricalMilestoneSnapshot(value = mapDateValue) {
+      const key = historicalMilestoneKey(value);
+      if (!key) return { key: "", data: { type: "FeatureCollection", features: [] }, labels: [] };
+      if (preparedHistoricalMilestoneSnapshots[key]) return preparedHistoricalMilestoneSnapshots[key];
+      const features = [];
+      activeHistoricalMilestones(value).forEach(item => {
+        const names = new Set(item.names);
+        prepareMapSnapshot(item.source).data.features.filter(feature => names.has(feature.properties.NAME)).forEach(feature => features.push(feature));
+      });
+      const labelsByName = new Map();
+      features.forEach(feature => {
+        const existing = labelsByName.get(feature.properties.NAME);
+        if (!existing || feature.properties.labelArea > existing.properties.labelArea) labelsByName.set(feature.properties.NAME, feature);
+      });
+      const snapshot = { key, data: { type: "FeatureCollection", features }, labels: Array.from(labelsByName.values()) };
+      preparedHistoricalMilestoneSnapshots[key] = snapshot;
+      return snapshot;
+    }
+
+    function ww1StageForDate(value = mapDateValue) {
+      if (value < Date.UTC(1914, 6, 28) || value >= Date.UTC(1918, 10, 11)) return "";
+      if (value < Date.UTC(1914, 8, 15)) return "outbreak";
+      if (value < Date.UTC(1915, 8, 30)) return "western-stalemate";
+      if (value < Date.UTC(1915, 11, 1)) return "great-retreat";
+      if (value < Date.UTC(1917, 0, 7)) return "balkans-occupied";
+      if (value < Date.UTC(1917, 10, 12)) return "romania-and-revolution";
+      if (value < Date.UTC(1918, 2, 3)) return "caporetto";
+      if (value < Date.UTC(1918, 6, 18)) return "brest-litovsk";
+      if (value < Date.UTC(1918, 8, 25)) return "spring-offensive-maximum";
+      if (value < Date.UTC(1918, 9, 28)) return "allied-counteroffensive";
+      return "imperial-collapse";
+    }
+
+    const ww1StageInfo = {
+      "outbreak": ["第一次世界大战爆发", "1914年正式国界 · 尚未叠加稳定占领区"],
+      "western-stalemate": ["第一次世界大战 · 西线稳定", "马恩河战役后阶段 · 占领区与战线为概化示意"],
+      "great-retreat": ["第一次世界大战 · 1915年俄军大撤退", "同盟国控制俄属波兰及波罗的海部分地区 · 东缘按1915年9月底战线概化"],
+      "balkans-occupied": ["第一次世界大战 · 塞尔维亚与黑山被占领", "使用1914国界表示国家整体占领状态，不表示分区占领线"],
+      "romania-and-revolution": ["第一次世界大战 · 罗马尼亚战役与俄国革命", "罗马尼亚大部被占领；俄国名称按政体变化，底层仍沿用1914边界"],
+      "caporetto": ["第一次世界大战 · 卡波雷托战役后", "意大利东北部占领区及东线控制区均为战区级概化"],
+      "brest-litovsk": ["第一次世界大战 · 布列斯特-立托夫斯克阶段", "1918年3月后同盟国控制范围示意；新宣布成立的国家使用1920轮廓近似"],
+      "spring-offensive-maximum": ["第一次世界大战 · 德军春季攻势最大推进", "约1918年7月18日的西线最大推进范围 · 不是逐日战壕线"],
+      "allied-counteroffensive": ["第一次世界大战 · 协约国最后攻势", "德军控制区持续收缩 · 以9月25日至停战前的阶段轮廓表示"],
+      "imperial-collapse": ["第一次世界大战末期 · 帝国瓦解", "1918年10月后新政治实体陆续出现；轮廓取自1920快照并明确作为近似"]
+    };
+
+    function prepareWw1Snapshot(value = mapDateValue) {
+      if (!window.WW1_EUROPE_MAP_DATA) return { key: "", data: { type: "FeatureCollection", features: [] }, labels: [] };
+      const raw = window.WW1_EUROPE_MAP_DATA;
+      const active = raw.features.filter(feature => {
+        const start = Date.parse(`${feature.properties.START}T00:00:00Z`);
+        const end = Date.parse(`${feature.properties.END}T00:00:00Z`);
+        return value >= start && value < end;
+      });
+      const key = active.map(feature => feature.properties.ID).sort().join("|");
+      if (preparedWw1Snapshots[key]) return preparedWw1Snapshots[key];
+      const data = {
+        type: "FeatureCollection",
+        features: active.map(feature => {
+          const p = feature.properties;
+          return { ...feature, properties: {
+            ...p,
+            color: p.COLOR || "#b66b5f",
+            nameZh: p.NAME,
+            labelLng: Number(p.LABEL_LNG),
+            labelLat: Number(p.LABEL_LAT),
+            labelZoom: Number(p.LABEL_ZOOM) || 3.3,
+            rank: 1,
+            labelArea: 40
+          }};
+        })
+      };
+      const labels = data.features.filter(feature => Number.isFinite(feature.properties.labelLng) && Number.isFinite(feature.properties.labelLat));
+      preparedWw1Snapshots[key] = { key, data, labels };
+      return preparedWw1Snapshots[key];
+    }
+
+    const ww1SuccessorDates = {
+      "Finland": Date.UTC(1917, 11, 6),
+      "Lithuania": Date.UTC(1918, 1, 16),
+      "Estonia": Date.UTC(1918, 1, 24),
+      "Georgia": Date.UTC(1918, 4, 26),
+      "Armenia": Date.UTC(1918, 4, 28),
+      "Azerbaijan": Date.UTC(1918, 4, 28),
+      "Czechoslovakia": Date.UTC(1918, 9, 28),
+      "Hungary": Date.UTC(1918, 9, 31),
+      "Poland": Date.UTC(1918, 10, 11),
+      "Austria": Date.UTC(1918, 10, 12),
+      "Latvia": Date.UTC(1918, 10, 18),
+      "Yugoslavia": Date.UTC(1918, 11, 1)
+    };
+
+    function prepareWw1SuccessorSnapshot(value = mapDateValue) {
+      if (value < Date.UTC(1917, 11, 6) || value >= Date.UTC(1920, 0, 1)) {
+        return { key: "", data: { type: "FeatureCollection", features: [] }, labels: [] };
+      }
+      if (!window.HISTORICAL_MAP_DATA?.["1920"]) return { key: "", data: { type: "FeatureCollection", features: [] }, labels: [] };
+      const activeNames = new Set(Object.entries(ww1SuccessorDates).filter(([, start]) => value >= start).map(([name]) => name));
+      const key = Array.from(activeNames).sort().join("|");
+      if (preparedWw1SuccessorSnapshots[key]) return preparedWw1SuccessorSnapshots[key];
+      const source = prepareMapSnapshot("1920");
+      const renameFor1918 = name => name === "Yugoslavia" ? "塞尔维亚人、克罗地亚人和斯洛文尼亚人王国" : historicalCountryNames[name];
+      const customize = feature => ({ ...feature, properties: {
+        ...feature.properties,
+        nameZh: renameFor1918(feature.properties.NAME),
+        rank: ["Finland", "Poland", "Austria", "Hungary", "Czechoslovakia", "Yugoslavia"].includes(feature.properties.NAME) ? 1 : 2
+      }});
+      const snapshot = {
+        key,
+        data: { type: "FeatureCollection", features: source.data.features.filter(feature => activeNames.has(feature.properties.NAME)).map(customize) },
+        labels: source.labels.filter(feature => activeNames.has(feature.properties.NAME)).map(customize)
+      };
+      preparedWw1SuccessorSnapshots[key] = snapshot;
+      return snapshot;
+    }
+
     function ww2StatusCategory(name, status) {
       const value = String(status || "").toLowerCase();
       if (value.includes("neutral")) return "neutral";
+      if (value.includes("occupied") || value.includes("protectorate")) return "occupied";
       if (value.includes("allies")) return "allies";
       if (name === "Soviet Union") return "allies";
       if (value.includes("german") || value.includes("axis") || (value.includes("belligerent") && ["Germany", "Italy"].includes(name))) return "axis";
-      if (value.includes("italian") || value.includes("romanian") || value.includes("protectorate")) return "occupied";
+      if (value.includes("italian") || value.includes("romanian")) return "occupied";
       return "other";
+    }
+
+    function worldWw2StageForDate(value = mapDateValue) {
+      if (value < Date.UTC(1938, 3, 1) || value >= Date.UTC(1945, 8, 2)) return "";
+      if (value < Date.UTC(1939, 8, 3)) return "east-asia-war";
+      if (value < Date.UTC(1940, 5, 10)) return "europe-war";
+      if (value < Date.UTC(1941, 5, 22)) return "axis-expansion";
+      if (value < Date.UTC(1941, 11, 8)) return "soviet-war";
+      if (value < Date.UTC(1943, 8, 8)) return "global-war";
+      return "italy-armistice";
+    }
+
+    const worldWw2OccupationChangeDates = [
+      "1940-09-22", "1941-12-10", "1941-12-25", "1942-03-09", "1942-05-10",
+      "1944-07-21", "1945-07-05", "1945-08-30", "1945-09-02"
+    ].map(value => Date.parse(value));
+
+    function worldWw2OccupationStageForDate(value = mapDateValue) {
+      return String(worldWw2OccupationChangeDates.filter(date => value >= date).at(-1) || 0);
+    }
+
+    function worldWw2StatusCategory(name, controller, stage, value = Date.UTC(1942, 0, 1)) {
+      if (!stage) return "";
+      const stageOrder = ["east-asia-war", "europe-war", "axis-expansion", "soviet-war", "global-war", "italy-armistice"].indexOf(stage);
+      const authority = controller || name;
+      const japanese = authority === "Empire of Japan" || ["Empire of Japan", "Japan", "Manchukuo"].includes(name);
+      const german = authority === "Germany" || name === "Germany";
+      const italian = authority === "Italy" || name === "Italy";
+      const japaneseOccupation = (
+        (name === "Hong Kong" && value >= Date.UTC(1941, 11, 25) && value < Date.UTC(1945, 7, 30)) ||
+        (name === "Guam" && value >= Date.UTC(1941, 11, 10) && value < Date.UTC(1944, 6, 21)) ||
+        (name === "Philippines" && value >= Date.UTC(1942, 4, 10) && value < Date.UTC(1945, 6, 5)) ||
+        (["Dutch East Indies", "Netherlands Indies"].includes(name) && value >= Date.UTC(1942, 2, 9) && value < Date.UTC(1945, 8, 2)) ||
+        (["French Indo-China", "Cambodia", "Cochin China"].includes(name) && value >= Date.UTC(1940, 8, 22) && value < Date.UTC(1945, 8, 2))
+      );
+      if (japaneseOccupation) return "occupied";
+      if (japanese || (stageOrder >= 1 && german) || (stageOrder >= 2 && stageOrder < 5 && italian)) return "axis";
+      const chinese = ["China", "Republic of China", "Chinese Warlords", "Chinese warlords"].includes(name);
+      const british = ["United Kingdom", "United Kingdom of Great Britain and Ireland"].includes(authority);
+      const french = authority === "France";
+      const soviet = authority === "USSR" || authority === "Soviet Union" || ["USSR", "Soviet Union"].includes(name);
+      const american = authority === "United States" || ["United States", "United States of America"].includes(name);
+      if (chinese || (stageOrder >= 1 && (british || french)) || (stageOrder >= 3 && soviet) || (stageOrder >= 4 && american)) return "allies";
+      return "";
+    }
+
+    function prepareWorldWw2Snapshot(year, stage, value = mapDateValue) {
+      const base = prepareDatedMapSnapshot(year, value);
+      if (!stage) return base.data;
+      const cacheKey = `${year}:${stage}:${datedWorldStageForDate(value)}:${worldWw2OccupationStageForDate(value)}`;
+      if (preparedWorldWw2Snapshots[cacheKey]) return preparedWorldWw2Snapshots[cacheKey];
+      const categoryColors = { axis: "#b66b5f", allies: "#7897b8", occupied: "#a995bb" };
+      const data = {
+        type: "FeatureCollection",
+        features: base.data.features.map(feature => {
+          const properties = { ...feature.properties };
+          const category = worldWw2StatusCategory(properties.NAME, properties.SUBJECTO, stage, value);
+          if (category) properties.color = categoryColors[category];
+          return { ...feature, properties };
+        })
+      };
+      preparedWorldWw2Snapshots[cacheKey] = data;
+      return data;
     }
 
     function prepareWw2Snapshot(year) {
       if (!year) return { data: { type: "FeatureCollection", features: [] }, labels: [] };
       if (preparedWw2Snapshots[year]) return preparedWw2Snapshots[year];
       let raw = window.WW2_EUROPE_MAP_DATA?.[year] || { type: "FeatureCollection", features: [] };
-      if (year === "1940-summer") {
+      if (year === "1939-poland") {
+        const occupiedPoland = window.WW2_EUROPE_MAP_DATA["1939"].features.map(feature => feature.properties.NAME === "Poland"
+          ? { ...feature, properties: { ...feature.properties, NAME: "Occupied Poland", STATUS: "German and Soviet occupied" } }
+          : feature);
+        raw = {
+          type: "FeatureCollection",
+          features: occupiedPoland.concat(window.WW2_EUROPE_MAP_DATA["1940"].features.filter(feature => feature.properties.NAME === "General Government"))
+        };
+      } else if (year === "1940-summer") {
         const westNames = new Set(["France", "Vichy France", "Belgium", "Netherlands", "Luxembourg", "Norway", "Denmark"]);
         raw = {
           type: "FeatureCollection",
           features: window.WW2_EUROPE_MAP_DATA["1940"].features.filter(feature => !westNames.has(feature.properties.NAME))
             .concat(window.WW2_EUROPE_MAP_DATA["1941"].features.filter(feature => westNames.has(feature.properties.NAME)))
+        };
+      } else if (year === "1943-italy") {
+        raw = {
+          type: "FeatureCollection",
+          features: window.WW2_EUROPE_MAP_DATA["1943"].features.map(feature => feature.properties.NAME === "Italy"
+            ? { ...feature, properties: { ...feature.properties, STATUS: "Allies and German-occupied" } }
+            : feature)
+        };
+      } else if (year === "1944-liberation") {
+        const liberatedNames = new Set(["France", "Belgium"]);
+        raw = {
+          type: "FeatureCollection",
+          features: window.WW2_EUROPE_MAP_DATA["1944"].features.filter(feature => !liberatedNames.has(feature.properties.NAME))
+            .concat(window.WW2_EUROPE_MAP_DATA["1945"].features.filter(feature => liberatedNames.has(feature.properties.NAME)))
         };
       }
       const categoryColors = { axis: "#b66b5f", allies: "#7897b8", neutral: "#c8bea8", occupied: "#a995bb", other: "#b8ad95" };
@@ -3349,26 +3791,48 @@
       return preparedWw2Snapshots[year];
     }
 
-    function flagStyleForCountry(name) {
+    function flagInfoForCountry(name, value = mapDateValue) {
       const horizontal = (...colors) => `linear-gradient(${colors.map((color, index) => `${color} ${index * 100 / colors.length}% ${(index + 1) * 100 / colors.length}%`).join(",")})`;
       const vertical = (...colors) => `linear-gradient(90deg,${colors.map((color, index) => `${color} ${index * 100 / colors.length}% ${(index + 1) * 100 / colors.length}%`).join(",")})`;
-      if (name === "German Empire") return horizontal("#171717", "#f5f1e7", "#b42e2e");
-      if (name === "Germany") return horizontal("#171717", "#b42e2e", "#d2a62f");
-      if (name === "France") return vertical("#24458f", "#f5f1e7", "#b42e2e");
-      if (name.includes("United Kingdom")) return "linear-gradient(90deg,transparent 42%,#fff 42% 58%,transparent 58%),linear-gradient(transparent 37%,#fff 37% 63%,transparent 63%),linear-gradient(90deg,transparent 46%,#b42e2e 46% 54%,transparent 54%),linear-gradient(transparent 43%,#b42e2e 43% 57%,transparent 57%),#23447a";
-      if (name === "Russian Empire" || name === "White Russia" || name === "South Russia") return horizontal("#f5f1e7", "#31599b", "#b42e2e");
-      if (name === "USSR" || name === "Soviet Union") return horizontal("#b42e2e", "#b42e2e", "#b42e2e");
-      if (name === "Austro-Hungarian Empire" || name === "Austria") return horizontal("#b42e2e", "#f5f1e7", "#b42e2e");
-      if (name.includes("Ottoman")) return "radial-gradient(circle at 58% 50%,#f5f1e7 0 18%,transparent 19%),#b42e2e";
-      if (name === "Turkey") return "radial-gradient(circle at 58% 50%,#f5f1e7 0 18%,transparent 19%),#b42e2e";
-      if (name === "Italy") return vertical("#238255", "#f5f1e7", "#b42e2e");
-      if (name === "Poland") return horizontal("#f5f1e7", "#c93d58");
-      if (name === "Belgium") return vertical("#171717", "#d7ae2c", "#b42e2e");
-      if (name === "Netherlands") return horizontal("#b42e2e", "#f5f1e7", "#31599b");
-      if (name === "Japan" || name === "Empire of Japan" || name === "Japan (USA)") return "radial-gradient(circle,#b42e2e 0 36%,transparent 38%),#f5f1e7";
-      if (name === "China" || name === "Republic of China") return horizontal("#b42e2e", "#d7ae2c", "#31599b", "#f5f1e7", "#171717");
-      if (name.includes("United States")) return "repeating-linear-gradient(#b42e2e 0 1.4px,#f5f1e7 1.4px 2.8px)";
-      return "";
+      const info = (background, label) => ({ backgrounds: [background], label });
+      if (name === "German Empire") {
+        if (value < Date.UTC(1871, 0, 1) || value >= Date.UTC(1918, 10, 9)) return null;
+        return info(horizontal("#171717", "#f5f1e7", "#b42e2e"), "德意志帝国国旗（1871—1918）");
+      }
+      if (name === "Germany") {
+        if (value < Date.UTC(1919, 7, 11)) return null;
+        if (value < Date.UTC(1933, 2, 12)) return info(horizontal("#171717", "#b42e2e", "#d2a62f"), "魏玛共和国国旗（1919—1933）");
+        if (value < Date.UTC(1935, 8, 15)) return {
+          backgrounds: [
+            horizontal("#171717", "#f5f1e7", "#b42e2e"),
+            "url('flag-germany-nsdap-1920-1945.svg') center/cover no-repeat"
+          ],
+          label: "德国共同国旗（1933年3月12日—1935年9月15日）"
+        };
+        return null;
+      }
+      if (name === "West Germany" && value >= Date.UTC(1949, 4, 23)) return info(horizontal("#171717", "#b42e2e", "#d2a62f"), "德意志联邦共和国国旗");
+      if (name === "East Germany" && value >= Date.UTC(1949, 9, 7)) return info(horizontal("#171717", "#b42e2e", "#d2a62f"), "德意志民主共和国国旗（1949年初期）");
+      if (name === "France") {
+        if (value < Date.UTC(1830, 6, 30)) return null;
+        return info(vertical("#24458f", "#f5f1e7", "#b42e2e"), "法国国旗");
+      }
+      if (name === "Russian Empire") {
+        if (value >= Date.UTC(1858, 5, 22) && value < Date.UTC(1896, 4, 11)) return info(horizontal("#171717", "#d2a62f", "#f5f1e7"), "俄罗斯帝国黑黄白旗（1858—1896）");
+        if (value < Date.UTC(1896, 4, 11) || value >= Date.UTC(1917, 2, 15)) return null;
+        return info(horizontal("#f5f1e7", "#31599b", "#b42e2e"), "俄罗斯帝国国旗（1896—1917）");
+      }
+      if (name === "Austria" && value >= Date.UTC(1918, 10, 12)) return info(horizontal("#b42e2e", "#f5f1e7", "#b42e2e"), "奥地利国旗");
+      if (name === "Poland" && value >= Date.UTC(1919, 7, 1)) return info(horizontal("#f5f1e7", "#c93d58"), "波兰国旗");
+      if (name === "Belgium" && value >= Date.UTC(1831, 9, 12)) return info(vertical("#171717", "#d7ae2c", "#b42e2e"), "比利时国旗");
+      if (name === "Netherlands" && value >= Date.UTC(1815, 2, 16)) return info(horizontal("#b42e2e", "#f5f1e7", "#31599b"), "荷兰国旗");
+      if (["Japan", "Empire of Japan", "Imperial Japan", "Japan (USA)"].includes(name) && value >= Date.UTC(1870, 1, 27)) return info("radial-gradient(circle,#b42e2e 0 36%,transparent 38%),#f5f1e7", ["Empire of Japan", "Imperial Japan"].includes(name) ? "日本帝国时期国旗" : "日本国旗");
+      if (["Chinese Warlords", "Chinese warlords"].includes(name) && value >= Date.UTC(1912, 0, 10) && value < Date.UTC(1928, 11, 29)) return info(horizontal("#b42e2e", "#d7ae2c", "#31599b", "#f5f1e7", "#171717"), "中华民国五色旗（1912—1928）");
+      return null;
+    }
+
+    function flagStyleForCountry(name, value = mapDateValue) {
+      return flagInfoForCountry(name, value)?.backgrounds?.[0] || "";
     }
 
     function mapSemanticText(zoom = historicalMap?.getZoom() || 1) {
@@ -3382,6 +3846,23 @@
       return "城市细部 · 精确地点";
     }
 
+    function setWarMapLegend(mode) {
+      if (!mode) {
+        warMapLegend.hidden = true;
+        return;
+      }
+      warMapLegend.hidden = false;
+      warMapLegend.innerHTML = mode === "ww1"
+        ? `<span><i style="background:#b66b5f"></i>同盟国军事占领或控制区</span>
+           <span><i style="background:#7897b8"></i>1917—1918年新政治实体</span>
+           <span><i style="background:#c8bea8"></i>1914年正式国界底图</span>
+           <span><i style="background:#fff6e7;border-style:dashed"></i>占领范围为阶段性概化</span>`
+        : `<span><i style="background:#b66b5f"></i>轴心国与德军控制</span>
+           <span><i style="background:#7897b8"></i>同盟国</span>
+           <span><i style="background:#c8bea8"></i>中立</span>
+           <span><i style="background:#a995bb"></i>其他占领或保护地</span>`;
+    }
+
     function updateMapTimeControls() {
       mapDateValue = clampMapDate(mapDateValue);
       mapTimeRange.value = String(mapDateValue);
@@ -3389,33 +3870,80 @@
       const snapshot = mapSnapshotForDate();
       const ww2Snapshot = ww2SnapshotForDate();
       if (ww2Snapshot) {
-        const stageLabel = ww2Snapshot === "1940-summer" ? "1940年西欧战役后" : `${ww2Snapshot}年`;
+        const specialStageLabels = {
+          "1939-poland": "1939年波兰被占领后",
+          "1940-summer": "1940年法国停战后",
+          "1943-italy": "1943年意大利停战后",
+          "1944-liberation": "1944年法国解放后"
+        };
+        const stageLabel = specialStageLabels[ww2Snapshot] || `${ww2Snapshot}年4月`;
         mapEraTitle.textContent = `第二次世界大战 · ${stageLabel}阶段`;
-        mapSnapshotNote.textContent = ww2Snapshot === "1940" && mapDateValue < Date.UTC(1940, 3, 1)
-          ? "波兰战役后阶段图 · 以1940年4月边界资料为底"
-          : ww2Snapshot === "1940-summer"
-            ? "法国停战后阶段图 · 组合1940与1941边界资料"
-            : `${ww2Snapshot}年4月欧洲边界与占领状态快照`;
-        warMapLegend.hidden = false;
+        const specialStageNotes = {
+          "1939-poland": "波兰整体标为德苏占领区，并叠加德占总督府轮廓；不提前套用1940年完整快照",
+          "1940-summer": "法国停战后阶段图 · 只替换西欧相关实体，不提前改动东欧",
+          "1943-italy": "意大利停战阶段 · 沿用1943年4月边界并标示交战与占领状态",
+          "1944-liberation": "法国、比利时解放阶段 · 沿用1944年4月东线，避免提前套用1945年快照"
+        };
+        mapSnapshotNote.textContent = specialStageNotes[ww2Snapshot] || `${ww2Snapshot}年4月欧洲边界与占领状态快照`;
+        setWarMapLegend("ww2");
         return;
       }
-      warMapLegend.hidden = true;
-      if (mapDateValue >= Date.UTC(1949, 9, 7)) {
-        mapEraTitle.textContent = "冷战德国 · 东西德并立";
-        mapSnapshotNote.textContent = "1949年10月7日东德成立 · 以1945占领区边界表示分区轮廓";
+      if (mapDateValue >= Date.UTC(1945, 4, 8) && mapDateValue < Date.UTC(1945, 8, 2)) {
+        mapEraTitle.textContent = "欧洲战事结束 · 亚太战争继续";
+        mapSnapshotNote.textContent = "德国已投降；日本仍在亚洲与太平洋作战，阵营和占领状态继续显示至1945年9月2日";
+        setWarMapLegend("ww2");
         return;
       }
-      if (mapDateValue >= Date.UTC(1949, 4, 23)) {
-        mapEraTitle.textContent = "冷战德国 · 西德成立";
-        mapSnapshotNote.textContent = "1949年5月23日西德成立 · 苏占区仍标为占领区";
+      const ww1Stage = ww1StageForDate();
+      const ww1Successors = prepareWw1SuccessorSnapshot();
+      if (ww1Stage || ww1Successors.data.features.length) {
+        setWarMapLegend("ww1");
+        if (ww1Stage) {
+          const stageInfo = ww1StageInfo[ww1Stage];
+          mapEraTitle.textContent = stageInfo[0];
+          mapSnapshotNote.textContent = stageInfo[1];
+        } else {
+          mapEraTitle.textContent = "第一次世界大战停战后的政治重组";
+          mapSnapshotNote.textContent = "1918年停战后新国家陆续出现 · 使用1920轮廓作局部近似，不代表当日最终边界";
+        }
+        return;
+      }
+      setWarMapLegend("");
+      const postwarStageInfo = [
+        [Date.UTC(1949, 11, 27), "印度尼西亚主权移交", "1949年12月27日荷兰正式移交主权；此前显示独立战争中的争议状态"],
+        [Date.UTC(1949, 11, 7), "中国内战后的政治分立", "中华人民共和国控制中国大陆；中华民国政府迁台，台湾另作标示"],
+        [Date.UTC(1949, 9, 7), "冷战德国 · 东西德并立", "1949年10月7日东德成立 · 以1945占领区边界表示分区轮廓"],
+        [Date.UTC(1949, 9, 1), "中华人民共和国成立", "1949年10月1日中国大陆切换为中华人民共和国；台湾标示中华民国"],
+        [Date.UTC(1949, 6, 20), "第一次中东战争停战线阶段", "1949年停战协定完成后显示以1960资料近似的以色列轮廓；此前不虚构稳定边界"],
+        [Date.UTC(1949, 4, 23), "冷战德国 · 西德成立", "1949年5月23日西德成立 · 苏占区仍标为占领区"],
+        [Date.UTC(1948, 4, 14), "第一次中东战争", "以色列成立，但战争期间边界未定；暂保留整个托管地为战争地区"],
+        [Date.UTC(1948, 1, 4), "锡兰独立", "1948年2月4日锡兰成为自治领"],
+        [Date.UTC(1948, 0, 4), "缅甸独立", "1948年1月4日缅甸脱离英国统治"],
+        [Date.UTC(1947, 7, 15), "印巴分治", "1947年8月印度和巴基斯坦独立；轮廓取自1960资料近似并包含东、西巴基斯坦"],
+        [Date.UTC(1946, 6, 4), "菲律宾独立", "1946年7月4日菲律宾共和国独立"],
+        [Date.UTC(1946, 4, 25), "外约旦独立", "1946年5月25日外约旦结束英国托管"],
+        [Date.UTC(1945, 8, 2), "第二次世界大战结束后的世界", "1945年9月2日日本投降后启用战后底图；后续建国按实际日期切换"]
+      ].find(([start]) => mapDateValue >= start);
+      if (postwarStageInfo) {
+        mapEraTitle.textContent = postwarStageInfo[1];
+        mapSnapshotNote.textContent = postwarStageInfo[2];
+        return;
+      }
+      const milestoneInfo = activeHistoricalMilestones().sort((a, b) => b.startValue - a.startValue)[0];
+      if (milestoneInfo) {
+        mapEraTitle.textContent = milestoneInfo.title;
+        mapSnapshotNote.textContent = milestoneInfo.note;
         return;
       }
       const snapshotInfo = {
-        "1914": ["第一次世界大战末期的世界", "1914版边界快照 · 当前用于1918—1919"],
+        "1815": ["维也纳体系下的世界", "1815版世界底图 · 1861、1867、1871欧洲节点另作局部近似"],
+        "1880": ["帝国扩张与民族国家时代", "1880版边界快照 · 当前用于1880—1899"],
+        "1900": ["世纪之交的世界", "1900版边界快照 · 当前用于1900—1913"],
+        "1914": ["第一次世界大战时期的世界", "1914版边界快照 · 当前用于1914—1919"],
         "1920": ["一战后的世界重组", "1920版边界快照 · 当前用于1920—1929"],
         "1930": ["战间期的世界", "1930版边界快照 · 当前用于1930—1937"],
-        "1938": ["第二次世界大战前夕", "1938版边界快照 · 当前用于1938—1944"],
-        "1945": ["第二次世界大战后的世界", "1945版边界快照 · 当前用于1945—1949"]
+        "1938": ["第二次世界大战前夕", "1938版世界底图 · 战时欧洲与亚太控制变化另以阶段层覆盖"],
+        "1945": ["第二次世界大战后的世界", "1945年9月后的战后底图 · 后续独立与分治按实际日期切换"]
       }[snapshot];
       mapEraTitle.textContent = snapshotInfo[0];
       mapSnapshotNote.textContent = snapshotInfo[1];
@@ -3436,7 +3964,10 @@
       clearMapMarkers(mapCityLabelMarkers);
       const zoom = historicalMap.getZoom();
       mapZoomStatus.textContent = mapSemanticText(zoom);
-      const snapshot = prepareMapSnapshot(mapSnapshotForDate());
+      const snapshot = prepareDatedMapSnapshot(mapSnapshotForDate());
+      const milestoneSnapshot = prepareHistoricalMilestoneSnapshot();
+      const ww1Snapshot = prepareWw1Snapshot();
+      const ww1Successors = prepareWw1SuccessorSnapshot();
       const ww2Snapshot = prepareWw2Snapshot(ww2SnapshotForDate());
       const hasWw2Overlay = ww2Snapshot.data.features.length > 0;
       let labelFeatures = hasWw2Overlay
@@ -3445,6 +3976,15 @@
             return labelLng < -25 || labelLng > 75 || labelLat < 30 || labelLat > 72;
           }).concat(ww2Snapshot.labels)
         : snapshot.labels;
+      if (!hasWw2Overlay && milestoneSnapshot.data.features.length) {
+        const suppressed = historicalMilestoneSuppressedNames();
+        labelFeatures = snapshot.labels.filter(feature => !suppressed.has(feature.properties.NAME)).concat(milestoneSnapshot.labels);
+      }
+      if (!hasWw2Overlay && ww1Successors.data.features.length) {
+        const suppressAustroHungary = mapDateValue >= Date.UTC(1918, 9, 28);
+        labelFeatures = labelFeatures.filter(feature => !(suppressAustroHungary && feature.properties.NAME === "Austro-Hungarian Empire"));
+        labelFeatures = labelFeatures.concat(ww1Successors.labels);
+      }
       if (!hasWw2Overlay && mapDateValue >= Date.UTC(1949, 4, 23)) {
         const westernZones = new Set(["Germany (UK)", "Germany (USA)", "Germany (France)"]);
         labelFeatures = labelFeatures.filter(feature => !westernZones.has(feature.properties.NAME));
@@ -3468,26 +4008,55 @@
         .forEach(feature => {
           const p = feature.properties;
           if (!Number.isFinite(p.labelLng) || !Number.isFinite(p.labelLat)) return;
+          const displayName = p.NAME === "Russian Empire" && mapDateValue >= Date.UTC(1917, 10, 7)
+            ? "苏维埃俄国及内战诸政权（沿用1914边界）"
+            : p.NAME === "Russian Empire" && mapDateValue >= Date.UTC(1917, 2, 15)
+              ? "俄罗斯共和国（沿用1914边界）"
+            : p.NAME === "USSR" && mapDateValue < Date.UTC(1922, 11, 30) ? "苏维埃俄国" : p.nameZh;
+          const flagInfo = zoom >= 2.5 ? flagInfoForCountry(p.NAME) : null;
           const point = historicalMap.project([p.labelLng, p.labelLat]);
           if (point.x < -80 || point.y < -30 || point.x > historicalMap.getCanvas().clientWidth + 80 || point.y > historicalMap.getCanvas().clientHeight + 30) return;
-          const width = Math.min(210, Math.max(42, String(p.nameZh).length * 13 + (zoom >= 2.5 && flagStyleForCountry(p.NAME) ? 25 : 0)));
+          const flagWidth = flagInfo ? (flagInfo.backgrounds.length > 1 ? 40 : 25) : 0;
+          const width = Math.min(230, Math.max(42, String(displayName).length * 13 + flagWidth));
           const rect = { left: point.x - width / 2, right: point.x + width / 2, top: point.y - 10, bottom: point.y + 10 };
           if (occupied.some(other => rectanglesOverlap(rect, other))) return;
           occupied.push(rect);
           const el = document.createElement("div");
           el.className = `country-map-label ${p.rank === 3 ? "minor" : ""}`;
-          const flag = zoom >= 2.5 ? flagStyleForCountry(p.NAME) : "";
-          if (flag) {
-            const flagEl = document.createElement("span");
-            flagEl.className = "map-flag";
-            flagEl.style.background = flag;
-            el.appendChild(flagEl);
+          if (flagInfo) {
+            const flagGroup = document.createElement("span");
+            flagGroup.className = flagInfo.backgrounds.length > 1 ? "map-flag-group" : "map-flag-group single";
+            flagGroup.title = flagInfo.label;
+            flagGroup.setAttribute("aria-label", flagInfo.label);
+            flagInfo.backgrounds.forEach(background => {
+              const flagEl = document.createElement("span");
+              flagEl.className = "map-flag";
+              flagEl.style.background = background;
+              flagGroup.appendChild(flagEl);
+            });
+            el.appendChild(flagGroup);
           }
           const name = document.createElement("span");
-          name.textContent = p.nameZh;
+          name.textContent = displayName;
           el.appendChild(name);
           mapCountryLabelMarkers.push(new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([p.labelLng, p.labelLat]).addTo(historicalMap));
         });
+
+      ww1Snapshot.labels.forEach(feature => {
+        const p = feature.properties;
+        if (zoom < p.labelZoom) return;
+        const point = historicalMap.project([p.labelLng, p.labelLat]);
+        if (point.x < -100 || point.y < -30 || point.x > historicalMap.getCanvas().clientWidth + 100 || point.y > historicalMap.getCanvas().clientHeight + 30) return;
+        const width = Math.min(210, Math.max(80, String(p.nameZh).length * 11));
+        const rect = { left: point.x - width / 2, right: point.x + width / 2, top: point.y - 10, bottom: point.y + 10 };
+        if (occupied.some(other => rectanglesOverlap(rect, other, 4))) return;
+        occupied.push(rect);
+        const el = document.createElement("div");
+        el.className = "country-map-label minor ww1-occupation-label";
+        el.textContent = p.nameZh;
+        el.title = p.NOTE || "一战占领区阶段示意";
+        mapCountryLabelMarkers.push(new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([p.labelLng, p.labelLat]).addTo(historicalMap));
+      });
 
       const cityRank = zoom >= 7.9 ? 2 : zoom >= 5.3 ? 1 : 0;
       mapCities.filter(city => city.rank <= cityRank).forEach(city => {
@@ -3531,9 +4100,30 @@
       updateMapTimeControls();
       if (!historicalMapReady) return;
       const snapshot = mapSnapshotForDate();
-      if (force || currentMapSnapshot !== snapshot) {
+      const datedWorldStage = datedWorldStageForDate();
+      const milestoneSnapshot = prepareHistoricalMilestoneSnapshot();
+      const worldWw2Stage = worldWw2StageForDate();
+      const worldWw2OccupationStage = worldWw2OccupationStageForDate();
+      if (force || currentMapSnapshot !== snapshot || currentDatedWorldStage !== datedWorldStage || currentWorldWw2Stage !== worldWw2Stage || currentWorldWw2OccupationStage !== worldWw2OccupationStage) {
         currentMapSnapshot = snapshot;
-        historicalMap.getSource("historical-countries")?.setData(prepareMapSnapshot(snapshot).data);
+        currentDatedWorldStage = datedWorldStage;
+        currentWorldWw2Stage = worldWw2Stage;
+        currentWorldWw2OccupationStage = worldWw2OccupationStage;
+        historicalMap.getSource("historical-countries")?.setData(prepareWorldWw2Snapshot(snapshot, worldWw2Stage, mapDateValue));
+      }
+      if (force || currentHistoricalMilestoneKey !== milestoneSnapshot.key) {
+        currentHistoricalMilestoneKey = milestoneSnapshot.key;
+        historicalMap.getSource("historical-milestones")?.setData(milestoneSnapshot.data);
+      }
+      const ww1Snapshot = prepareWw1Snapshot();
+      if (force || currentWw1SnapshotKey !== ww1Snapshot.key) {
+        currentWw1SnapshotKey = ww1Snapshot.key;
+        historicalMap.getSource("ww1-occupation")?.setData(ww1Snapshot.data);
+      }
+      const ww1Successors = prepareWw1SuccessorSnapshot();
+      if (force || currentWw1SuccessorKey !== ww1Successors.key) {
+        currentWw1SuccessorKey = ww1Successors.key;
+        historicalMap.getSource("ww1-successors")?.setData(ww1Successors.data);
       }
       const ww2Snapshot = ww2SnapshotForDate();
       if (force || currentWw2Snapshot !== ww2Snapshot) {
@@ -3556,7 +4146,7 @@
     }
 
     function loadHistoricalMapData() {
-      if (window.HISTORICAL_MAP_DATA && window.WW2_EUROPE_MAP_DATA) return Promise.resolve();
+      if (window.HISTORICAL_MAP_DATA && window.WW1_EUROPE_MAP_DATA && window.WW2_EUROPE_MAP_DATA) return Promise.resolve();
       if (mapDataLoadPromise) return mapDataLoadPromise;
       mapDataLoadPromise = new Promise((resolve, reject) => {
         const script = document.createElement("script");
@@ -3574,7 +4164,7 @@
         mapSnapshotNote.textContent = "地图资源未能载入，请刷新页面重试。";
         return;
       }
-      if (!window.HISTORICAL_MAP_DATA || !window.WW2_EUROPE_MAP_DATA) {
+      if (!window.HISTORICAL_MAP_DATA || !window.WW1_EUROPE_MAP_DATA || !window.WW2_EUROPE_MAP_DATA) {
         mapSnapshotNote.textContent = "正在载入历史国界数据……";
         loadHistoricalMapData().then(ensureHistoricalMap).catch(() => {
           mapSnapshotNote.textContent = "历史国界数据未能载入，请刷新页面重试。";
@@ -3603,14 +4193,14 @@
         }
       });
       historicalMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-      historicalMap.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: "历史边界数据 · 斯坦福二战欧洲边界" }), "bottom-left");
+      historicalMap.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: "历史边界数据 · 西点一战地图集 · 斯坦福二战欧洲边界" }), "bottom-left");
       historicalMap.on("load", () => {
-        historicalMap.addSource("historical-countries", { type: "geojson", data: prepareMapSnapshot(mapSnapshotForDate()).data });
+        historicalMap.addSource("historical-countries", { type: "geojson", data: prepareWorldWw2Snapshot(mapSnapshotForDate(), worldWw2StageForDate(), mapDateValue) });
         historicalMap.addLayer({
           id: "historical-country-fill",
           type: "fill",
           source: "historical-countries",
-          paint: { "fill-color": ["get", "color"], "fill-opacity": .86 }
+          paint: { "fill-color": ["get", "color"], "fill-opacity": 1 }
         });
         historicalMap.addLayer({
           id: "historical-country-lines",
@@ -3622,12 +4212,67 @@
             "line-opacity": .82
           }
         });
+        const initialMilestones = prepareHistoricalMilestoneSnapshot();
+        historicalMap.addSource("historical-milestones", { type: "geojson", data: initialMilestones.data });
+        historicalMap.addLayer({
+          id: "historical-milestone-fill",
+          type: "fill",
+          source: "historical-milestones",
+          paint: { "fill-color": ["get", "color"], "fill-opacity": 1 }
+        });
+        historicalMap.addLayer({
+          id: "historical-milestone-lines",
+          type: "line",
+          source: "historical-milestones",
+          paint: {
+            "line-color": "#3f423e",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 1, .75, 5, 1.5, 9, 2.1],
+            "line-opacity": .94
+          }
+        });
+        const initialWw1Successors = prepareWw1SuccessorSnapshot();
+        historicalMap.addSource("ww1-successors", { type: "geojson", data: initialWw1Successors.data });
+        historicalMap.addLayer({
+          id: "ww1-successor-fill",
+          type: "fill",
+          source: "ww1-successors",
+          paint: { "fill-color": ["get", "color"], "fill-opacity": 1 }
+        });
+        historicalMap.addLayer({
+          id: "ww1-successor-lines",
+          type: "line",
+          source: "ww1-successors",
+          paint: {
+            "line-color": "#3f423e",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 1, .8, 5, 1.55, 9, 2.15],
+            "line-opacity": .96
+          }
+        });
+        const initialWw1 = prepareWw1Snapshot();
+        historicalMap.addSource("ww1-occupation", { type: "geojson", data: initialWw1.data });
+        historicalMap.addLayer({
+          id: "ww1-occupation-fill",
+          type: "fill",
+          source: "ww1-occupation",
+          paint: { "fill-color": ["get", "color"], "fill-opacity": .54 }
+        });
+        historicalMap.addLayer({
+          id: "ww1-occupation-lines",
+          type: "line",
+          source: "ww1-occupation",
+          paint: {
+            "line-color": "#7d443d",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 1, 1, 5, 1.8, 9, 2.5],
+            "line-dasharray": [2, 1.4],
+            "line-opacity": .9
+          }
+        });
         historicalMap.addSource("ww2-europe", { type: "geojson", data: prepareWw2Snapshot(ww2SnapshotForDate()).data });
         historicalMap.addLayer({
           id: "ww2-europe-fill",
           type: "fill",
           source: "ww2-europe",
-          paint: { "fill-color": ["get", "color"], "fill-opacity": .94 }
+          paint: { "fill-color": ["get", "color"], "fill-opacity": 1 }
         });
         historicalMap.addLayer({
           id: "ww2-europe-lines",
@@ -3672,6 +4317,12 @@
         });
         historicalMapReady = true;
         currentMapSnapshot = mapSnapshotForDate();
+        currentDatedWorldStage = datedWorldStageForDate();
+        currentHistoricalMilestoneKey = initialMilestones.key;
+        currentWw1SnapshotKey = initialWw1.key;
+        currentWw1SuccessorKey = initialWw1Successors.key;
+        currentWorldWw2Stage = worldWw2StageForDate();
+        currentWorldWw2OccupationStage = worldWw2OccupationStageForDate();
         currentWw2Snapshot = ww2SnapshotForDate();
         updateHistoricalMapSnapshot(true);
         if (mapFocusCardId) applyMapCardFocus(false);

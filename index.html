@@ -3585,16 +3585,16 @@
 
     const ww1StageInfo = {
       "outbreak": ["第一次世界大战爆发", "1914年正式国界 · 尚未叠加稳定占领区"],
-      "western-stalemate": ["第一次世界大战 · 西线稳定", "控制区裁入1914年国家轮廓，西缘沿1915年稳定前线精细绘制"],
-      "great-retreat": ["第一次世界大战 · 1915年俄军大撤退", "同盟国控制俄属波兰及波罗的海部分地区 · 东缘沿1915年9月30日前线绘制"],
+      "western-stalemate": ["第一次世界大战 · 西线稳定", "各国保持正常国家颜色；占领与军事控制区继承控制国颜色并标注控制方"],
+      "great-retreat": ["第一次世界大战 · 1915年俄军大撤退", "同盟国控制俄属波兰及波罗的海部分地区；显示逻辑与二战阶段一致，不单独绘制粗前线"],
       "balkans-occupied": ["第一次世界大战 · 塞尔维亚与黑山被占领", "占领区沿1914年国界显示；塞尔维亚按奥匈与保加利亚占领区分开着色"],
-      "romania-and-revolution": ["第一次世界大战 · 罗马尼亚战役与俄国革命", "罗马尼亚控制区沿1917年1月7日前线裁剪，摩尔达维亚未占领区保持原色"],
-      "hindenburg-line": ["第一次世界大战 · 兴登堡防线阶段", "西线切换至1917年前线；罗马尼亚、塞尔维亚和东线控制区保持各自精细边界"],
-      "caporetto": ["第一次世界大战 · 卡波雷托战役后", "意大利东北部控制区沿皮亚韦河前线裁入1914年意大利国界"],
-      "brest-litovsk": ["第一次世界大战 · 布列斯特-立托夫斯克阶段", "同盟国控制区裁入俄罗斯帝国轮廓，东缘沿条约控制限界绘制"],
-      "spring-offensive": ["第一次世界大战 · 德军春季攻势", "西线先显示1918年3月20日前线，7月18日再切换至最大推进范围"],
-      "spring-offensive-maximum": ["第一次世界大战 · 德军春季攻势最大推进", "采用1918年7月18日前后最大推进线，控制区仍严格裁入战前国家轮廓"],
-      "allied-counteroffensive": ["第一次世界大战 · 协约国最后攻势", "采用1918年9月25日前线，德军控制区随反攻向东收缩"],
+      "romania-and-revolution": ["第一次世界大战 · 罗马尼亚战役与俄国革命", "罗马尼亚控制区继承控制国颜色，摩尔达维亚未占领区保持原国家颜色"],
+      "hindenburg-line": ["第一次世界大战 · 兴登堡防线阶段", "一战占领与军事控制区按控制方着色；不再额外叠加粗前线"],
+      "caporetto": ["第一次世界大战 · 卡波雷托战役后", "意大利东北部控制区继承控制国颜色，并保留正式边界作为底层参照"],
+      "brest-litovsk": ["第一次世界大战 · 布列斯特-立托夫斯克阶段", "同盟国控制区继承控制国颜色；范围说明保留在标注与来源文档中"],
+      "spring-offensive": ["第一次世界大战 · 德军春季攻势", "西线控制区按阶段切换并继承控制国颜色，显示逻辑与二战占领区一致"],
+      "spring-offensive-maximum": ["第一次世界大战 · 德军春季攻势最大推进", "控制区按阶段范围显示，未被覆盖的正式政治边界继续作为底层参照"],
+      "allied-counteroffensive": ["第一次世界大战 · 协约国最后攻势", "德军控制区随反攻阶段收缩；地图以控制区面和虚线边界表达变化"],
       "imperial-collapse": ["第一次世界大战末期 · 帝国瓦解", "1918年10月后新政治实体陆续出现；轮廓取自1920快照并明确作为近似"]
     };
 
@@ -3604,7 +3604,7 @@
       const active = raw.features.filter(feature => {
         const start = Date.parse(`${feature.properties.START}T00:00:00Z`);
         const end = Date.parse(`${feature.properties.END}T00:00:00Z`);
-        return value >= start && value < end;
+        return value >= start && value < end && feature.properties.KIND !== "frontline";
       });
       const key = active.map(feature => feature.properties.ID).sort().join("|");
       if (preparedWw1Snapshots[key]) return preparedWw1Snapshots[key];
@@ -4390,9 +4390,10 @@
           source: "ww1-occupation",
           filter: ["==", ["get", "isFrontline"], true],
           paint: {
-            "line-color": "#342f2a",
-            "line-width": ["interpolate", ["linear"], ["zoom"], 1, 1.25, 5, 2.35, 9, 3.4],
-            "line-opacity": .98
+            "line-color": "#685d78",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 1, 1.1, 5, 1.9, 9, 2.6],
+            "line-dasharray": [2, 1.4],
+            "line-opacity": 0
           }
         });
         historicalMap.addSource("ww2-europe", { type: "geojson", data: prepareWw2Snapshot(ww2SnapshotForDate()).data });

@@ -26,11 +26,20 @@
 
 ## 两次世界大战
 
+- 两次大战共用同一显示逻辑：正常国家使用各自国家颜色；占领或军事控制区使用控制国的国家颜色，并以虚线和中文标签明确控制方，不再使用整张地图的阵营红蓝染色。
+- 多国分区占领但源数据未提供分区几何时，标签会列出全部控制方并标明“现有轮廓未细分”；颜色仅取首列控制方作为视觉提示，不把概化范围冒充精确分区。
+- 一战与二战占领层均使用全不透明控制国颜色、清晰实体实线轮廓和控制区虚线轮廓；一战战区级概化范围仍会保留精度说明，但不再使用视觉上模糊的半透明大色块。
+- 二战欧洲数据中的 `Soviet Union` 与世界底图的 `USSR` 统一为同一颜色身份；专题线层不绘制 `Soviet Union` 要素自身的整圈外框，避免把东经约68.7度的数据集裁切边误当成政治边界。真正的西部边界与战线由相邻国家、占领区轮廓和世界底图共同显示。苏联名称在世界视野显示一次，在区域视野根据地图中心自动选择欧洲或亚洲锚点，保证可见且不重复。
 - 第一次世界大战：详见 `ww1-map-SOURCE.md`。主要依据西点军校 Digital History Center 的一战地图集，并把正式国界、军事占领区和新宣布政治实体分层显示。
 - 第二次世界大战欧洲：详见 `ww2-map-SOURCE.md`。主要使用 Stanford Spatial History Lab / United States Holocaust Memorial Museum 的月度边界资料。
 - USHMM 德国占领地图用于交叉核对波兰分割、1940年西欧占领、1941年南斯拉夫与希腊、1943年意大利、1944年西欧解放：
   - https://encyclopedia.ushmm.org/content/en/gallery/german-occupation-maps
-- 欧洲战争在1945年5月结束，但世界阵营与亚太占领状态继续显示到1945年9月2日，不会在德国投降时提前清空日本战区。
+- 亚太整区控制结束节点交叉核对：
+  - 关岛（美国国家公园管理局，1944年7月21日登陆、8月10日有组织抵抗结束）：https://www.nps.gov/wapa/learn/historyculture/battle-of-guam.htm
+  - 菲律宾（菲律宾外交部历史页，1945年7月5日麦克阿瑟宣布全境解放）：https://praguepe.dfa.gov.ph/the-philippines/cabinet-and-other-officials/14-sample-data-articles/90-philippine-history
+  - 香港（香港政府年报，日本1945年8月投降后的管治交接）：https://www.yearbook.gov.hk/2006/en/21_06.htm
+  - 法属印度支那（法国国防部纪念资料，1945年3月9日日军政变）：https://www.cheminsdememoire.gouv.fr/index.php/fr/9-mars-1945-en-indochine-le-coup-de-force-japonais
+- 欧洲战争在1945年5月结束后，亚洲与太平洋的日本控制区仍按各地实际结束节点继续显示；关岛按1944年8月10日有组织抵抗结束、菲律宾按1945年7月5日宣布解放、香港与法属印度支那等在日本投降后取消日本控制色。
 
 ## 1945—1949战后节点
 

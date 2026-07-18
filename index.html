@@ -3954,6 +3954,18 @@
       if (name === "Mexico") return info(vertical("#2f7f4f", "#f5f1e7", "#b42e2e"), "墨西哥国旗（国徽简化）");
       if (name === "Brazil") return info(disc("#2f7f4f", "#31599b", 20), value >= Date.UTC(1889, 10, 19) ? "巴西共和国国旗（黄菱形与星空简化）" : "巴西帝国旗（纹章简化）");
       if (name === "Argentina") return info(horizontal("#75aadb", "#f5f1e7", "#75aadb"), "阿根廷国旗（太阳简化）");
+      if (["Colombia", "Ecuador", "Venezuela"].includes(name)) return info(horizontal("#d2a62f", "#31599b", "#b42e2e"), `${historicalCountryNames[name] || name}国旗（纹章/星徽简化）`);
+      if (name === "Chile") return info(canton(horizontal("#f5f1e7", "#b42e2e"), "#31599b"), "智利国旗（白星简化）");
+      if (name === "Peru") return info(vertical("#b42e2e", "#f5f1e7", "#b42e2e"), "秘鲁国旗（国徽简化）");
+      if (name === "Bolivia") return info(horizontal("#b42e2e", "#d2a62f", "#2f7f4f"), "玻利维亚国旗（国徽简化）");
+      if (name === "Uruguay") return info(canton("repeating-linear-gradient(#f5f1e7 0 11.11%,#75aadb 11.11% 22.22%)", "#f5f1e7"), "乌拉圭国旗（五月太阳简化）");
+      if (name === "Paraguay") return info(horizontal("#b42e2e", "#f5f1e7", "#31599b"), "巴拉圭国旗（国徽简化）");
+      if (name === "Cuba") return info("linear-gradient(90deg,#b42e2e 0 42%,transparent 42%),repeating-linear-gradient(#31599b 0 20%,#f5f1e7 20% 40%)", "古巴国旗（白星简化）");
+      if (name === "Haiti") return info(horizontal("#31599b", "#b42e2e"), "海地国旗（国徽简化）");
+      if (name === "Dominican Republic") return info("linear-gradient(90deg,#31599b 0 42%,#f5f1e7 42% 58%,#b42e2e 58%),linear-gradient(#31599b 0 42%,#f5f1e7 42% 58%,#b42e2e 58%)", "多米尼加共和国国旗（国徽简化）");
+      if (["Guatemala", "Honduras", "El Salvador", "Nicaragua"].includes(name)) return info(horizontal("#75aadb", "#f5f1e7", "#75aadb"), `${historicalCountryNames[name] || name}国旗（中美洲蓝白蓝，纹章/星徽简化）`);
+      if (name === "Costa Rica") return info(horizontal("#31599b", "#f5f1e7", "#b42e2e", "#b42e2e", "#f5f1e7", "#31599b"), "哥斯达黎加国旗（国徽简化）");
+      if (name === "Panama") return info("linear-gradient(90deg,#f5f1e7 0 50%,#b42e2e 50%),linear-gradient(#f5f1e7 0 50%,#31599b 50%)", "巴拿马国旗（星徽简化）");
       if (["Kingdom of Italy", "Italy", "Italian Social Republic"].includes(name)) return info(vertical("#26824f", "#f5f1e7", "#b42e2e"), "意大利三色旗（无国徽简化）");
       if (name === "Spain") {
         if (value >= Date.UTC(1931, 3, 27) && value < Date.UTC(1939, 3, 1)) return info(horizontal("#b42e2e", "#d2a62f", "#6d4c8d"), "西班牙第二共和国国旗（无国徽简化）");
@@ -3978,6 +3990,22 @@
       if (name === "Afghanistan") return info(vertical("#171717", "#b42e2e", "#2f7f4f"), "阿富汗国旗（纹章简化）");
       if (name === "Egypt") return info(horizontal("#b42e2e", "#f5f1e7", "#171717"), "埃及王国旗（星月简化）");
       if (["British India", "British Raj"].includes(name)) return info(unionCanton("#b42e2e"), "英属印度红船旗（徽章简化）");
+      if (name === "Korea") return info(disc("#f5f1e7", "#b42e2e", 18), "朝鲜/大韩帝国太极旗（太极与卦象简化）");
+      if (name === "Korea (Japan)") return info(disc("#f5f1e7", "#b42e2e"), "日占朝鲜标识（使用日本国旗）");
+      if (["Korea (USA)", "Korea (USSR)"].includes(name)) return info(disc("#f5f1e7", "#b42e2e", 18), `${historicalCountryNames[name] || name}（太极旗简化）`);
+      if (["Siam", "Thailand", "Rattanakosin Kingdom"].includes(name)) {
+        if (value < Date.UTC(1917, 8, 28)) return info("#b42e2e", "暹罗红地白象旗（白象简化）");
+        return info(horizontal("#b42e2e", "#f5f1e7", "#31599b", "#31599b", "#f5f1e7", "#b42e2e"), "暹罗/泰国三色旗");
+      }
+      if (name === "Mongolia") return info(vertical("#b42e2e", "#31599b", "#b42e2e"), "蒙古国旗（索永布简化）");
+      if (name === "Tibet") return info("repeating-linear-gradient(90deg,#f5f1e7 0 12.5%,#b42e2e 12.5% 25%)", "西藏雪山狮子旗（图案简化）");
+      if (name === "Hejaz") return info("linear-gradient(90deg,#b42e2e 0 34%,transparent 34%),linear-gradient(#171717 0 33%,#2f7f4f 33% 66%,#f5f1e7 66%)", "汉志旗/阿拉伯起义旗（简化）");
+      if (["Arabia (Nejd)", "Nejd", "Saudi Arabia"].includes(name)) return info("#2f7f4f", "内志/沙特阿拉伯绿旗（铭文与剑简化）");
+      if (["Morocco", "Morocco (France)", "Spanish Morocco"].includes(name)) return info("#b42e2e", "摩洛哥红旗（五角星/殖民标识简化）");
+      if (name === "Tunisia") return info(disc("#b42e2e", "#f5f1e7", 22), "突尼斯国旗（星月简化）");
+      if (name === "Liberia") return info(canton("repeating-linear-gradient(#b42e2e 0 9.09%,#f5f1e7 9.09% 18.18%)", "#31599b"), "利比里亚国旗（白星简化）");
+      if (["Ethiopia", "Ethiopia (Italy)"].includes(name)) return info(horizontal("#2f7f4f", "#d2a62f", "#b42e2e"), "埃塞俄比亚三色旗（徽章/意占标识简化）");
+      if (name === "Albania") return info("#b42e2e", "阿尔巴尼亚国旗（双头鹰简化）");
       if (["USSR", "Soviet Union"].includes(name)) return info("#b42e2e", "苏联国旗（锤镰星简化）");
       if (name === "Japan (USA)") return info(disc("#f5f1e7", "#b42e2e"), "盟军占领时期日本标识（沿用日之丸）");
       if (["Japan", "Empire of Japan", "Imperial Japan"].includes(name) && value >= Date.UTC(1870, 1, 27)) return info(disc("#f5f1e7", "#b42e2e"), ["Empire of Japan", "Imperial Japan"].includes(name) ? "日本帝国时期国旗" : "日本国旗");

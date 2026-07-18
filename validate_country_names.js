@@ -58,7 +58,13 @@ const requiredTranslatedNames = [
   'Mexico', 'Brazil', 'Argentina', 'Manchu Empire', 'Republic of China', "People's Republic of China",
   'Republic of China (Taiwan)', 'Japan', 'Empire of Japan', 'Japan (USA)', 'British India', 'British Raj',
   'Persia', 'Iran', 'Afghanistan', 'Egypt', 'India', 'Pakistan', 'Poland', 'Czechoslovakia',
-  'Yugoslavia', 'Kingdom of Serbs, Croats and Slovenes'
+  'Yugoslavia', 'Kingdom of Serbs, Croats and Slovenes',
+  'Colombia', 'Ecuador', 'Venezuela', 'Chile', 'Peru', 'Bolivia', 'Uruguay', 'Paraguay',
+  'Cuba', 'Haiti', 'Dominican Republic', 'Guatemala', 'Honduras', 'El Salvador', 'Nicaragua',
+  'Costa Rica', 'Panama', 'Korea', 'Korea (Japan)', 'Korea (USA)', 'Korea (USSR)',
+  'Siam', 'Thailand', 'Mongolia', 'Tibet', 'Hejaz', 'Arabia (Nejd)', 'Saudi Arabia',
+  'Morocco', 'Morocco (France)', 'Spanish Morocco', 'Tunisia', 'Liberia', 'Ethiopia',
+  'Ethiopia (Italy)', 'Albania'
 ];
 
 const missingAliases = knownTypoNames.filter(name => rawNames.has(name) && !historicalCountryNameAliases[name]);

@@ -3305,7 +3305,7 @@
       if (value < Date.UTC(1920, 0, 1)) return "1914";
       if (value < Date.UTC(1930, 0, 1)) return "1920";
       if (value < Date.UTC(1938, 0, 1)) return "1930";
-      if (value < Date.UTC(1945, 8, 2)) return "1938";
+      if (value < Date.UTC(1945, 4, 8)) return "1938";
       return "1945";
     }
 
@@ -3944,12 +3944,12 @@
       if (name === "Lithuania") return info(horizontal("#d2a62f", "#2f7f4f", "#b42e2e"), "立陶宛国旗");
       if (name === "United Kingdom" || name === "United Kingdom of Great Britain and Ireland") return info("linear-gradient(34deg,transparent 0 42%,#f5f1e7 42% 46%,#b42e2e 46% 54%,#f5f1e7 54% 58%,transparent 58%),linear-gradient(146deg,transparent 0 42%,#f5f1e7 42% 46%,#b42e2e 46% 54%,#f5f1e7 54% 58%,transparent 58%),linear-gradient(90deg,transparent 0 42%,#f5f1e7 42% 46%,#b42e2e 46% 54%,#f5f1e7 54% 58%,transparent 58%),linear-gradient(transparent 0 36%,#f5f1e7 36% 43%,#b42e2e 43% 57%,#f5f1e7 57% 64%,transparent 64%),#24458f", "英国国旗（小尺寸近似）");
       if (["United States", "United States of America"].includes(name)) return info("linear-gradient(90deg,#31599b 0 42%,transparent 42%),repeating-linear-gradient(#b42e2e 0 7.69%,#f5f1e7 7.69% 15.38%)", "美国国旗（星区简化）");
-      if (name === "Canada") return info(unionCanton("#b42e2e"), "加拿大红船旗（1965年前，徽章简化）");
+      if (name === "Canada") return info(unionCanton("#b42e2e"), "加拿大红船旗（1949年前时间轴内，徽章简化）");
       if (name === "Australia") return info(unionCanton("#24458f"), "澳大利亚蓝船旗（星徽简化）");
       if (name === "New Zealand") return info(unionCanton("#24458f"), "新西兰蓝船旗（南十字星简化）");
       if (["Union of South Africa", "South Africa"].includes(name)) {
         if (value < Date.UTC(1928, 4, 31)) return info(unionCanton("#b42e2e"), "南非联邦红船旗（1928年前，徽章简化）");
-        return info(horizontal("#f07f3c", "#f5f1e7", "#31599b"), "南非联邦旗（1928—1994，小尺寸简化）");
+        return info(horizontal("#f07f3c", "#f5f1e7", "#31599b"), "南非联邦旗（1928—1949时间轴内，小尺寸简化）");
       }
       if (name === "Mexico") return info(vertical("#2f7f4f", "#f5f1e7", "#b42e2e"), "墨西哥国旗（国徽简化）");
       if (name === "Brazil") return info(disc("#2f7f4f", "#31599b", 20), value >= Date.UTC(1889, 10, 19) ? "巴西共和国国旗（黄菱形与星空简化）" : "巴西帝国旗（纹章简化）");
@@ -3979,7 +3979,8 @@
       if (name === "Egypt") return info(horizontal("#b42e2e", "#f5f1e7", "#171717"), "埃及王国旗（星月简化）");
       if (["British India", "British Raj"].includes(name)) return info(unionCanton("#b42e2e"), "英属印度红船旗（徽章简化）");
       if (["USSR", "Soviet Union"].includes(name)) return info("#b42e2e", "苏联国旗（锤镰星简化）");
-      if (["Japan", "Empire of Japan", "Imperial Japan", "Japan (USA)"].includes(name) && value >= Date.UTC(1870, 1, 27)) return info(disc("#f5f1e7", "#b42e2e"), ["Empire of Japan", "Imperial Japan"].includes(name) ? "日本帝国时期国旗" : "日本国旗");
+      if (name === "Japan (USA)") return info(disc("#f5f1e7", "#b42e2e"), "盟军占领时期日本标识（沿用日之丸）");
+      if (["Japan", "Empire of Japan", "Imperial Japan"].includes(name) && value >= Date.UTC(1870, 1, 27)) return info(disc("#f5f1e7", "#b42e2e"), ["Empire of Japan", "Imperial Japan"].includes(name) ? "日本帝国时期国旗" : "日本国旗");
       if (["Republic of China", "People's Republic of China", "Republic of China (Taiwan)", "China"].includes(name)) {
         if (name === "People's Republic of China" && value >= Date.UTC(1949, 9, 1)) return info("#b42e2e", "中华人民共和国国旗（五星简化）");
         if (["Republic of China", "China"].includes(name) && value >= Date.UTC(1912, 0, 10) && value < Date.UTC(1928, 11, 29)) return info(horizontal("#b42e2e", "#d7ae2c", "#31599b", "#f5f1e7", "#171717"), "中华民国五色旗（1912—1928）");
@@ -4000,6 +4001,10 @@
       if (name === "Russian Empire") {
         if (value >= Date.UTC(1917, 10, 7)) return "苏维埃俄国及内战诸政权（沿用1914边界）";
         if (value >= Date.UTC(1917, 2, 15)) return "俄罗斯共和国（沿用1914边界）";
+      }
+      if (name === "German Empire") {
+        if (value >= Date.UTC(1919, 7, 11)) return "魏玛共和国（沿用1914边界）";
+        if (value >= Date.UTC(1918, 10, 9)) return "德国革命后的共和国（沿用1914边界）";
       }
       if (name === "Germany") {
         if (value >= Date.UTC(1933, 0, 30) && value < Date.UTC(1945, 4, 8)) return "德国（纳粹德国）";

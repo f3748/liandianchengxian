@@ -49,17 +49,33 @@ const knownTypoNames = [
   'Fezzan (Frech Lybia)'
 ];
 
+const requiredTranslatedNames = [
+  'German Empire', 'Germany', 'Austrian Empire', 'Austro-Hungarian Empire', 'Austria Hungary',
+  'France', 'United Kingdom', 'United Kingdom of Great Britain and Ireland', 'United States',
+  'United States of America', 'Russian Empire', 'USSR', 'Soviet Union', 'Ottoman Empire',
+  'Ottoman Sultanate', 'Turkey', 'Kingdom of Italy', 'Italy', 'Spain', 'Portugal', 'Netherlands',
+  'Belgium', 'Switzerland', 'Luxembourg', 'Canada', 'Australia', 'New Zealand', 'Union of South Africa',
+  'Mexico', 'Brazil', 'Argentina', 'Manchu Empire', 'Republic of China', "People's Republic of China",
+  'Republic of China (Taiwan)', 'Japan', 'Empire of Japan', 'Japan (USA)', 'British India', 'British Raj',
+  'Persia', 'Iran', 'Afghanistan', 'Egypt', 'India', 'Pakistan', 'Poland', 'Czechoslovakia',
+  'Yugoslavia', 'Kingdom of Serbs, Croats and Slovenes'
+];
+
 const missingAliases = knownTypoNames.filter(name => rawNames.has(name) && !historicalCountryNameAliases[name]);
 const missingTranslations = knownTypoNames
   .filter(name => rawNames.has(name))
   .map(name => historicalCountryNameAliases[name])
   .filter(canonicalName => !historicalCountryNames[canonicalName]);
+const missingRequiredTranslations = requiredTranslatedNames
+  .filter(name => rawNames.has(name) || historicalCountryNames[name])
+  .filter(name => !historicalCountryNames[name]);
 
-if (missingAliases.length || missingTranslations.length) {
+if (missingAliases.length || missingTranslations.length || missingRequiredTranslations.length) {
   console.error('Country-name audit failed.');
   if (missingAliases.length) console.error('Missing aliases:', missingAliases.join(', '));
   if (missingTranslations.length) console.error('Missing translations:', missingTranslations.join(', '));
+  if (missingRequiredTranslations.length) console.error('Missing required translations:', missingRequiredTranslations.join(', '));
   process.exit(1);
 }
 
-console.log(`Country-name audit passed: ${knownTypoNames.filter(name => rawNames.has(name)).length} known source typo aliases covered.`);
+console.log(`Country-name audit passed: ${knownTypoNames.filter(name => rawNames.has(name)).length} known source typo aliases and ${requiredTranslatedNames.length} required display names covered.`);

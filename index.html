@@ -2189,7 +2189,7 @@
             <div class="map-time-head">
               <div>
                 <h1>地图时间轴</h1>
-                <p>拖动日期观察国界和政治实体名称变化；本阶段覆盖1815—1949年。</p>
+                <p>拖动日期观察国界和政治实体名称变化；本阶段向前扩展到1648—1949年。</p>
               </div>
               <div class="map-date-tools">
                 <button class="map-stage-button" id="map-prev-stage" type="button">← 上一处变化</button>
@@ -2199,7 +2199,7 @@
             </div>
             <input class="map-time-range" id="map-time-range" type="range" aria-label="历史地图日期" />
             <div class="map-time-ticks" aria-hidden="true">
-              <span>1815</span><span>1880</span><span>1900</span><span>1914</span><span>1930</span><span>1945</span><span>1949</span>
+              <span>1648</span><span>1763</span><span>1815</span><span>1880</span><span>1900</span><span>1914</span><span>1930</span><span>1945</span><span>1949</span>
             </div>
             <div class="map-credit">世界边界：<a href="https://github.com/aourednik/historical-basemaps" target="_blank" rel="noopener noreferrer">Historical Basemaps</a>（GPL-3.0）；一战阶段核对：<a href="https://dhc.westpoint.edu/atlases/" target="_blank" rel="noopener noreferrer">西点军校一战地图集</a>；二战欧洲阶段：<a href="https://web.stanford.edu/group/spatialhistory/cgi-bin/site/project.php?id=1015" target="_blank" rel="noopener noreferrer">斯坦福历史空间实验室</a>。战时图按关键阶段切换，不代表逐日军事前线。</div>
           </div>
@@ -2643,11 +2643,11 @@
       return (card.fields || []).find(field => field.label === label)?.value || "";
     }
 
-    const MAP_MIN_DATE = Date.UTC(1815, 5, 9);
+    const MAP_MIN_DATE = Date.UTC(1648, 9, 24);
     const MAP_MAX_DATE = Date.UTC(1949, 11, 31);
     const DAY_MS = 24 * 60 * 60 * 1000;
     const mapStageDates = [
-      "1815-06-09", "1830-02-03", "1830-10-04", "1858-06-22", "1861-03-17", "1862-01-24",
+      "1648-10-24", "1688-11-05", "1713-04-11", "1756-05-17", "1763-02-10", "1776-07-04", "1783-09-03", "1789-07-14", "1792-09-21", "1804-05-18", "1812-06-24", "1814-09-18", "1815-06-09", "1830-02-03", "1830-10-04", "1858-06-22", "1861-03-17", "1862-01-24",
       "1866-10-12", "1867-06-08", "1870-09-20", "1871-01-01", "1871-01-18", "1878-07-13",
       "1880-01-01", "1896-05-11", "1900-01-01", "1905-06-07", "1908-10-05", "1910-08-29",
       "1912-01-01", "1913-08-10", "1914-07-28", "1914-08-01", "1914-08-03", "1914-08-04",
@@ -3150,7 +3150,29 @@
       ,"Reichskommissariat Ukraine": "乌克兰专员辖区"
       ,"Transnistria": "德涅斯特河沿岸占领区"
       ,"Italian Social Republic": "意大利社会共和国"
+      ,"Kingdom of Hawaii": "夏威夷王国"
+      ,"Sultanate of Zanzibar": "桑给巴尔苏丹国"
+      ,"Maori": "毛利诸部"
+      ,"Anglo-Egyptian Sudan": "英埃苏丹"
+      ,"Cyrenaica (UK Libya)": "昔兰尼加（英占区）"
+      ,"Tripolitania (UK Libya)": "的黎波里塔尼亚（英占区）"
+      ,"Fezzan (French Libya)": "费赞（法占区）"
     };
+
+    const historicalCountryNameAliases = {
+      "Kongldom of Hawaii": "Kingdom of Hawaii",
+      "Sultinate of Zanzibar": "Sultanate of Zanzibar",
+      "M?ori": "Maori",
+      "Kingfom of Italy": "Kingdom of Italy",
+      "Anglo-Egyption Sudan": "Anglo-Egyptian Sudan",
+      "Cyraneica (UK Lybia)": "Cyrenaica (UK Libya)",
+      "Tripolitana (UK Lybia)": "Tripolitania (UK Libya)",
+      "Fezzan (Frech Lybia)": "Fezzan (French Libya)"
+    };
+
+    function canonicalHistoricalName(name) {
+      return historicalCountryNameAliases[name] || name;
+    }
 
     const mapCities = [
       { name: "伦敦", coordinates: [-0.1276, 51.5072], rank: 1 },
@@ -3362,7 +3384,7 @@
         "United States of America": "United States",
         "Imperial Japan": "Empire of Japan"
       };
-      return aliases[name] || name;
+      return canonicalHistoricalName(aliases[name] || name);
     }
 
     function prepareMapSnapshot(year) {
@@ -3377,6 +3399,10 @@
           const width = Math.max(0, bounds[2] - bounds[0]);
           const height = Math.max(0, bounds[3] - bounds[1]);
           const calculatedLabel = geometryLabelPoint(feature.geometry);
+          properties.originalName = properties.NAME;
+          properties.NAME = canonicalHistoricalName(properties.NAME);
+          properties.PARTOF = canonicalHistoricalName(properties.PARTOF || properties.NAME);
+          properties.SUBJECTO = canonicalHistoricalName(properties.SUBJECTO || properties.PARTOF || properties.NAME);
           const manualLabel = historicalLabelAnchors[properties.NAME];
           const sovereign = properties.PARTOF || properties.NAME;
           properties.nameZh = historicalCountryNames[properties.NAME] || "";
@@ -3585,16 +3611,16 @@
 
     const ww1StageInfo = {
       "outbreak": ["第一次世界大战爆发", "1914年正式国界 · 尚未叠加稳定占领区"],
-      "western-stalemate": ["第一次世界大战 · 西线稳定", "控制区裁入1914年国家轮廓，西缘沿1915年稳定前线精细绘制"],
-      "great-retreat": ["第一次世界大战 · 1915年俄军大撤退", "同盟国控制俄属波兰及波罗的海部分地区 · 东缘沿1915年9月30日前线绘制"],
+      "western-stalemate": ["第一次世界大战 · 西线稳定", "各国保持正常国家颜色；占领与军事控制区继承控制国颜色并标注控制方"],
+      "great-retreat": ["第一次世界大战 · 1915年俄军大撤退", "同盟国控制俄属波兰及波罗的海部分地区；显示逻辑与二战阶段一致，不单独绘制粗前线"],
       "balkans-occupied": ["第一次世界大战 · 塞尔维亚与黑山被占领", "占领区沿1914年国界显示；塞尔维亚按奥匈与保加利亚占领区分开着色"],
-      "romania-and-revolution": ["第一次世界大战 · 罗马尼亚战役与俄国革命", "罗马尼亚控制区沿1917年1月7日前线裁剪，摩尔达维亚未占领区保持原色"],
-      "hindenburg-line": ["第一次世界大战 · 兴登堡防线阶段", "西线切换至1917年前线；罗马尼亚、塞尔维亚和东线控制区保持各自精细边界"],
-      "caporetto": ["第一次世界大战 · 卡波雷托战役后", "意大利东北部控制区沿皮亚韦河前线裁入1914年意大利国界"],
-      "brest-litovsk": ["第一次世界大战 · 布列斯特-立托夫斯克阶段", "同盟国控制区裁入俄罗斯帝国轮廓，东缘沿条约控制限界绘制"],
-      "spring-offensive": ["第一次世界大战 · 德军春季攻势", "西线先显示1918年3月20日前线，7月18日再切换至最大推进范围"],
-      "spring-offensive-maximum": ["第一次世界大战 · 德军春季攻势最大推进", "采用1918年7月18日前后最大推进线，控制区仍严格裁入战前国家轮廓"],
-      "allied-counteroffensive": ["第一次世界大战 · 协约国最后攻势", "采用1918年9月25日前线，德军控制区随反攻向东收缩"],
+      "romania-and-revolution": ["第一次世界大战 · 罗马尼亚战役与俄国革命", "罗马尼亚控制区继承控制国颜色，摩尔达维亚未占领区保持原国家颜色"],
+      "hindenburg-line": ["第一次世界大战 · 兴登堡防线阶段", "一战占领与军事控制区按控制方着色；不再额外叠加粗前线"],
+      "caporetto": ["第一次世界大战 · 卡波雷托战役后", "意大利东北部控制区继承控制国颜色，并保留正式边界作为底层参照"],
+      "brest-litovsk": ["第一次世界大战 · 布列斯特-立托夫斯克阶段", "同盟国控制区继承控制国颜色；范围说明保留在标注与来源文档中"],
+      "spring-offensive": ["第一次世界大战 · 德军春季攻势", "西线控制区按阶段切换并继承控制国颜色，显示逻辑与二战占领区一致"],
+      "spring-offensive-maximum": ["第一次世界大战 · 德军春季攻势最大推进", "控制区按阶段范围显示，未被覆盖的正式政治边界继续作为底层参照"],
+      "allied-counteroffensive": ["第一次世界大战 · 协约国最后攻势", "德军控制区随反攻阶段收缩；地图以控制区面和虚线边界表达变化"],
       "imperial-collapse": ["第一次世界大战末期 · 帝国瓦解", "1918年10月后新政治实体陆续出现；轮廓取自1920快照并明确作为近似"]
     };
 
@@ -3604,7 +3630,7 @@
       const active = raw.features.filter(feature => {
         const start = Date.parse(`${feature.properties.START}T00:00:00Z`);
         const end = Date.parse(`${feature.properties.END}T00:00:00Z`);
-        return value >= start && value < end;
+        return value >= start && value < end && feature.properties.KIND !== "frontline";
       });
       const key = active.map(feature => feature.properties.ID).sort().join("|");
       if (preparedWw1Snapshots[key]) return preparedWw1Snapshots[key];
@@ -3863,8 +3889,12 @@
     }
 
     function flagInfoForCountry(name, value = mapDateValue) {
+      name = canonicalHistoricalName(name);
       const horizontal = (...colors) => `linear-gradient(${colors.map((color, index) => `${color} ${index * 100 / colors.length}% ${(index + 1) * 100 / colors.length}%`).join(",")})`;
       const vertical = (...colors) => `linear-gradient(90deg,${colors.map((color, index) => `${color} ${index * 100 / colors.length}% ${(index + 1) * 100 / colors.length}%`).join(",")})`;
+      const canton = (base, cantonColor) => `linear-gradient(90deg,${cantonColor} 0 42%,transparent 42%),linear-gradient(${cantonColor} 0 50%,transparent 50%),${base}`;
+      const disc = (base, color, size = 36) => `radial-gradient(circle at 50% 50%,${color} 0 ${size}%,transparent ${size + 2}%),${base}`;
+      const unionCanton = base => `linear-gradient(90deg,#24458f 0 42%,transparent 42%),linear-gradient(#24458f 0 52%,transparent 52%),${base}`;
       const info = (background, label) => ({ backgrounds: [background], label });
       if (name === "German Empire") {
         if (value < Date.UTC(1871, 0, 1) || value >= Date.UTC(1918, 10, 9)) return null;
@@ -3880,30 +3910,124 @@
           ],
           label: "德国共同国旗（1933年3月12日—1935年9月15日）"
         };
+        if (value < Date.UTC(1945, 4, 8)) return info("url('flag-germany-nsdap-1920-1945.svg') center/cover no-repeat", "德国国旗（1935—1945）");
         return null;
       }
       if (name === "West Germany" && value >= Date.UTC(1949, 4, 23)) return info(horizontal("#171717", "#b42e2e", "#d2a62f"), "德意志联邦共和国国旗");
       if (name === "East Germany" && value >= Date.UTC(1949, 9, 7)) return info(horizontal("#171717", "#b42e2e", "#d2a62f"), "德意志民主共和国国旗（1949年初期）");
       if (name === "France") {
-        if (value < Date.UTC(1830, 6, 30)) return null;
-        return info(vertical("#24458f", "#f5f1e7", "#b42e2e"), "法国国旗");
+        if (value >= Date.UTC(1815, 6, 9) && value < Date.UTC(1830, 6, 30)) return info("#f5f1e7", "波旁复辟时期法国白旗（简化）");
+        if (value >= Date.UTC(1794, 1, 15)) return info(vertical("#24458f", "#f5f1e7", "#b42e2e"), "法国三色旗");
+        return null;
       }
       if (name === "Russian Empire") {
         if (value >= Date.UTC(1858, 5, 22) && value < Date.UTC(1896, 4, 11)) return info(horizontal("#171717", "#d2a62f", "#f5f1e7"), "俄罗斯帝国黑黄白旗（1858—1896）");
         if (value < Date.UTC(1896, 4, 11) || value >= Date.UTC(1917, 2, 15)) return null;
         return info(horizontal("#f5f1e7", "#31599b", "#b42e2e"), "俄罗斯帝国国旗（1896—1917）");
       }
+      if (name === "Austrian Empire" && value < Date.UTC(1867, 5, 8)) return info(horizontal("#171717", "#d2a62f"), "奥地利帝国黑黄旗（简化）");
+      if (["Austria Hungary", "Austro-Hungarian Empire"].includes(name) && value >= Date.UTC(1867, 5, 8) && value < Date.UTC(1918, 10, 12)) return {
+        backgrounds: [horizontal("#b42e2e", "#f5f1e7", "#b42e2e"), horizontal("#b42e2e", "#f5f1e7", "#4d8b57")],
+        label: "奥匈帝国没有单一通用国旗；以奥地利红白红与匈牙利红白绿并列表示（小尺寸简化）"
+      };
       if (name === "Austria" && value >= Date.UTC(1918, 10, 12)) return info(horizontal("#b42e2e", "#f5f1e7", "#b42e2e"), "奥地利国旗");
+      if (name === "Hungary" && value >= Date.UTC(1918, 10, 16)) return info(horizontal("#b42e2e", "#f5f1e7", "#4d8b57"), "匈牙利国旗（无国徽简化）");
       if (name === "Poland" && value >= Date.UTC(1919, 7, 1)) return info(horizontal("#f5f1e7", "#c93d58"), "波兰国旗");
       if (name === "Belgium" && value >= Date.UTC(1831, 9, 12)) return info(vertical("#171717", "#d7ae2c", "#b42e2e"), "比利时国旗");
       if (name === "Netherlands" && value >= Date.UTC(1815, 2, 16)) return info(horizontal("#b42e2e", "#f5f1e7", "#31599b"), "荷兰国旗");
-      if (["Japan", "Empire of Japan", "Imperial Japan", "Japan (USA)"].includes(name) && value >= Date.UTC(1870, 1, 27)) return info("radial-gradient(circle,#b42e2e 0 36%,transparent 38%),#f5f1e7", ["Empire of Japan", "Imperial Japan"].includes(name) ? "日本帝国时期国旗" : "日本国旗");
+      if (name === "Switzerland") return info("linear-gradient(90deg,transparent 0 40%,#f5f1e7 40% 60%,transparent 60%),linear-gradient(transparent 0 35%,#f5f1e7 35% 65%,transparent 65%),#b42e2e", "瑞士国旗");
+      if (name === "Luxembourg") return info(horizontal("#b42e2e", "#f5f1e7", "#75aadb"), "卢森堡国旗");
+      if (name === "Ireland") return info(vertical("#2f7f4f", "#f5f1e7", "#d97941"), "爱尔兰三色旗");
+      if (name === "Iceland") return info("linear-gradient(90deg,transparent 0 30%,#f5f1e7 30% 43%,#b42e2e 43% 50%,#f5f1e7 50% 63%,transparent 63%),linear-gradient(transparent 0 36%,#f5f1e7 36% 43%,#b42e2e 43% 57%,#f5f1e7 57% 64%,transparent 64%),#31599b", "冰岛国旗");
+      if (name === "Estonia") return info(horizontal("#31599b", "#171717", "#f5f1e7"), "爱沙尼亚国旗");
+      if (name === "Latvia") return info(horizontal("#8f2638", "#f5f1e7", "#8f2638"), "拉脱维亚国旗");
+      if (name === "Lithuania") return info(horizontal("#d2a62f", "#2f7f4f", "#b42e2e"), "立陶宛国旗");
+      if (name === "United Kingdom" || name === "United Kingdom of Great Britain and Ireland") return info("linear-gradient(34deg,transparent 0 42%,#f5f1e7 42% 46%,#b42e2e 46% 54%,#f5f1e7 54% 58%,transparent 58%),linear-gradient(146deg,transparent 0 42%,#f5f1e7 42% 46%,#b42e2e 46% 54%,#f5f1e7 54% 58%,transparent 58%),linear-gradient(90deg,transparent 0 42%,#f5f1e7 42% 46%,#b42e2e 46% 54%,#f5f1e7 54% 58%,transparent 58%),linear-gradient(transparent 0 36%,#f5f1e7 36% 43%,#b42e2e 43% 57%,#f5f1e7 57% 64%,transparent 64%),#24458f", "英国国旗（小尺寸近似）");
+      if (["United States", "United States of America"].includes(name)) return info("linear-gradient(90deg,#31599b 0 42%,transparent 42%),repeating-linear-gradient(#b42e2e 0 7.69%,#f5f1e7 7.69% 15.38%)", "美国国旗（星区简化）");
+      if (name === "Canada") return info(unionCanton("#b42e2e"), "加拿大红船旗（1965年前，徽章简化）");
+      if (name === "Australia") return info(unionCanton("#24458f"), "澳大利亚蓝船旗（星徽简化）");
+      if (name === "New Zealand") return info(unionCanton("#24458f"), "新西兰蓝船旗（南十字星简化）");
+      if (["Union of South Africa", "South Africa"].includes(name)) {
+        if (value < Date.UTC(1928, 4, 31)) return info(unionCanton("#b42e2e"), "南非联邦红船旗（1928年前，徽章简化）");
+        return info(horizontal("#f07f3c", "#f5f1e7", "#31599b"), "南非联邦旗（1928—1994，小尺寸简化）");
+      }
+      if (name === "Mexico") return info(vertical("#2f7f4f", "#f5f1e7", "#b42e2e"), "墨西哥国旗（国徽简化）");
+      if (name === "Brazil") return info(disc("#2f7f4f", "#31599b", 20), value >= Date.UTC(1889, 10, 19) ? "巴西共和国国旗（黄菱形与星空简化）" : "巴西帝国旗（纹章简化）");
+      if (name === "Argentina") return info(horizontal("#75aadb", "#f5f1e7", "#75aadb"), "阿根廷国旗（太阳简化）");
+      if (["Kingdom of Italy", "Italy", "Italian Social Republic"].includes(name)) return info(vertical("#26824f", "#f5f1e7", "#b42e2e"), "意大利三色旗（无国徽简化）");
+      if (name === "Spain") {
+        if (value >= Date.UTC(1931, 3, 27) && value < Date.UTC(1939, 3, 1)) return info(horizontal("#b42e2e", "#d2a62f", "#6d4c8d"), "西班牙第二共和国国旗（无国徽简化）");
+        return info(horizontal("#b42e2e", "#d2a62f", "#d2a62f", "#b42e2e"), "西班牙国旗（无国徽简化）");
+      }
+      if (name === "Portugal") {
+        if (value < Date.UTC(1910, 9, 5)) return info(vertical("#24458f", "#f5f1e7"), "葡萄牙王国蓝白旗（无国徽简化）");
+        return info(vertical("#2f7f4f", "#b42e2e"), "葡萄牙共和国国旗（无国徽简化）");
+      }
+      if (name === "Denmark") return info("linear-gradient(90deg,transparent 0 30%,#f5f1e7 30% 40%,transparent 40%),linear-gradient(transparent 0 42%,#f5f1e7 42% 58%,transparent 58%),#b42e2e", "丹麦国旗");
+      if (name === "Sweden") return info("linear-gradient(90deg,transparent 0 30%,#d2a62f 30% 40%,transparent 40%),linear-gradient(transparent 0 42%,#d2a62f 42% 58%,transparent 58%),#31599b", "瑞典国旗");
+      if (name === "Norway") return info("linear-gradient(90deg,transparent 0 30%,#f5f1e7 30% 43%,#31599b 43% 50%,#f5f1e7 50% 63%,transparent 63%),linear-gradient(transparent 0 36%,#f5f1e7 36% 43%,#31599b 43% 57%,#f5f1e7 57% 64%,transparent 64%),#b42e2e", "挪威国旗");
+      if (name === "Finland") return info("linear-gradient(90deg,transparent 0 32%,#31599b 32% 44%,transparent 44%),linear-gradient(transparent 0 40%,#31599b 40% 60%,transparent 60%),#f5f1e7", "芬兰国旗");
+      if (name === "Greece") return info("linear-gradient(90deg,#31599b 0 38%,transparent 38%),linear-gradient(transparent 0 40%,#f5f1e7 40% 60%,transparent 60%),repeating-linear-gradient(#31599b 0 11.11%,#f5f1e7 11.11% 22.22%)", "希腊国旗（小尺寸近似）");
+      if (name === "Romania") return info(vertical("#31599b", "#d2a62f", "#b42e2e"), "罗马尼亚国旗");
+      if (name === "Bulgaria") return info(horizontal("#f5f1e7", "#4d8b57", "#b42e2e"), "保加利亚国旗");
+      if (["Serbia", "Yugoslavia", "Kingdom of Serbs, Croats and Slovenes"].includes(name)) return info(horizontal("#31599b", "#f5f1e7", "#b42e2e"), "南斯拉夫/塞尔维亚三色旗（无国徽简化）");
+      if (name === "Czechoslovakia") return info(canton(horizontal("#f5f1e7", "#b42e2e"), "#31599b"), "捷克斯洛伐克国旗（蓝楔简化）");
+      if (["Ottoman Empire", "Ottoman Sultanate", "Turkey"].includes(name)) return info(disc("#b42e2e", "#f5f1e7", 18), name === "Turkey" ? "土耳其国旗（星月简化为白圆）" : "奥斯曼旗（星月简化为白圆）");
+      if (name === "Manchu Empire") return info("radial-gradient(circle at 72% 28%,#b42e2e 0 8%,transparent 9%),#d2a62f", "清朝黄龙旗（龙纹简化）");
+      if (["Persia", "Iran"].includes(name)) return info(horizontal("#2f7f4f", "#f5f1e7", "#b42e2e"), "波斯/伊朗狮子与太阳旗（三色与纹章简化）");
+      if (name === "Afghanistan") return info(vertical("#171717", "#b42e2e", "#2f7f4f"), "阿富汗国旗（纹章简化）");
+      if (name === "Egypt") return info(horizontal("#b42e2e", "#f5f1e7", "#171717"), "埃及王国旗（星月简化）");
+      if (["British India", "British Raj"].includes(name)) return info(unionCanton("#b42e2e"), "英属印度红船旗（徽章简化）");
+      if (["USSR", "Soviet Union"].includes(name)) return info("#b42e2e", "苏联国旗（锤镰星简化）");
+      if (["Japan", "Empire of Japan", "Imperial Japan", "Japan (USA)"].includes(name) && value >= Date.UTC(1870, 1, 27)) return info(disc("#f5f1e7", "#b42e2e"), ["Empire of Japan", "Imperial Japan"].includes(name) ? "日本帝国时期国旗" : "日本国旗");
+      if (["Republic of China", "People's Republic of China", "Republic of China (Taiwan)", "China"].includes(name)) {
+        if (name === "People's Republic of China" && value >= Date.UTC(1949, 9, 1)) return info("#b42e2e", "中华人民共和国国旗（五星简化）");
+        if (["Republic of China", "China"].includes(name) && value >= Date.UTC(1912, 0, 10) && value < Date.UTC(1928, 11, 29)) return info(horizontal("#b42e2e", "#d7ae2c", "#31599b", "#f5f1e7", "#171717"), "中华民国五色旗（1912—1928）");
+        if (["Republic of China", "Republic of China (Taiwan)", "China"].includes(name) && value >= Date.UTC(1928, 11, 29)) return info(canton("#b42e2e", "#31599b"), "中华民国青天白日满地红旗（白日简化）");
+      }
       if (["Chinese Warlords", "Chinese warlords"].includes(name) && value >= Date.UTC(1912, 0, 10) && value < Date.UTC(1928, 11, 29)) return info(horizontal("#b42e2e", "#d7ae2c", "#31599b", "#f5f1e7", "#171717"), "中华民国五色旗（1912—1928）");
+      if (name === "India" && value >= Date.UTC(1947, 7, 15)) return info(horizontal("#d97941", "#f5f1e7", "#2f7f4f"), "印度国旗（法轮简化）");
+      if (name === "Pakistan" && value >= Date.UTC(1947, 7, 14)) return info(canton("#2f7f4f", "#f5f1e7"), "巴基斯坦国旗（星月简化）");
       return null;
     }
 
     function flagStyleForCountry(name, value = mapDateValue) {
       return flagInfoForCountry(name, value)?.backgrounds?.[0] || "";
+    }
+
+    function historicalDisplayNameForCountry(name, baseNameZh, value = mapDateValue) {
+      name = canonicalHistoricalName(name);
+      if (name === "Russian Empire") {
+        if (value >= Date.UTC(1917, 10, 7)) return "苏维埃俄国及内战诸政权（沿用1914边界）";
+        if (value >= Date.UTC(1917, 2, 15)) return "俄罗斯共和国（沿用1914边界）";
+      }
+      if (name === "Germany") {
+        if (value >= Date.UTC(1933, 0, 30) && value < Date.UTC(1945, 4, 8)) return "德国（纳粹德国）";
+        if (value >= Date.UTC(1919, 7, 11) && value < Date.UTC(1933, 0, 30)) return "魏玛共和国";
+      }
+      if (name === "Kingdom of Italy" || name === "Italy") {
+        if (value < Date.UTC(1946, 5, 2)) return "意大利王国";
+        return "意大利共和国";
+      }
+      if (name === "Japan" || name === "Empire of Japan" || name === "Imperial Japan") {
+        if (value >= Date.UTC(1868, 0, 3) && value < Date.UTC(1945, 8, 2)) return "日本帝国";
+      }
+      if (name === "Japan (USA)") return "日本（盟军占领）";
+      if (name === "Spain" && value >= Date.UTC(1931, 3, 14) && value < Date.UTC(1939, 3, 1)) return "西班牙第二共和国";
+      if (name === "Portugal") {
+        if (value < Date.UTC(1910, 9, 5)) return "葡萄牙王国";
+        return "葡萄牙共和国";
+      }
+      if (name === "France" && value >= Date.UTC(1815, 6, 9) && value < Date.UTC(1830, 6, 30)) return "法兰西王国（波旁复辟）";
+      if (name === "Republic of China" || name === "China") {
+        if (value >= Date.UTC(1912, 0, 1) && value < Date.UTC(1949, 9, 1)) return "中华民国";
+      }
+      if (name === "People's Republic of China") return "中华人民共和国";
+      if (name === "Republic of China (Taiwan)") return "中华民国（台湾）";
+      if (name === "Ottoman Sultanate" && value >= Date.UTC(1922, 10, 1)) return "土耳其大国民议会政府";
+      if (name === "Turkey" && value >= Date.UTC(1923, 9, 29)) return "土耳其共和国";
+      if (name === "USSR" && value < Date.UTC(1922, 11, 30)) return "苏维埃俄国";
+      return baseNameZh || historicalCountryNames[name] || name;
     }
 
     function mapSemanticText(zoom = historicalMap?.getZoom() || 1) {
@@ -4016,8 +4140,27 @@
         mapSnapshotNote.textContent = milestoneInfo.note;
         return;
       }
+      const pre1815StageInfo = [
+        [Date.UTC(1814, 8, 18), "维也纳会议开幕", "1814年9月维也纳会议开幕；当前阶段使用1815版底图作为会后秩序参照，不代表会议期间逐日边界"],
+        [Date.UTC(1812, 5, 24), "拿破仑帝国鼎盛与远征俄国", "1812年前后欧洲处于拿破仑战争高峰；由于暂无1800年代专门边界数据，本阶段暂以1815版底图作前史参照"],
+        [Date.UTC(1804, 4, 18), "法兰西第一帝国成立", "1804年拿破仑称帝；此处先把时间轴向前开放，地图轮廓仍沿用1815资料并明确标注为近似参照"],
+        [Date.UTC(1792, 8, 21), "法兰西第一共和国成立", "1792年法国废除君主制、建立共和国；当前前史阶段使用1815底图参照，后续可补入革命战争时期专门边界"],
+        [Date.UTC(1789, 6, 14), "法国大革命爆发", "1789年7月14日进入革命时代；地图边界暂用1815底图作参照，不代表1789实际版图"],
+        [Date.UTC(1783, 8, 3), "巴黎和约与美国独立承认", "1783年英国承认美国独立；当前仍沿用1815底图作大西洋革命时代参照，不代表1783逐点边界"],
+        [Date.UTC(1776, 6, 4), "美国独立宣言", "1776年北美十三州宣布独立；本阶段先作为前史节点提示，地图轮廓沿用1815底图近似"],
+        [Date.UTC(1763, 1, 10), "七年战争后的世界格局", "1763年《巴黎和约》后英法殖民竞争格局变化；由于暂无1763专门底图，页面沿用1815底图作远前史参照"],
+        [Date.UTC(1756, 4, 17), "七年战争爆发", "1756年欧洲与殖民地战争连成全球冲突；地图仍为1815底图参照，不表示1756实际边界"],
+        [Date.UTC(1713, 3, 11), "乌得勒支和约体系", "1713年《乌得勒支和约》重塑欧洲王位继承与殖民利益；当前作为远前史节点提示，轮廓沿用1815底图近似"],
+        [Date.UTC(1688, 10, 5), "光荣革命与英荷权力重组", "1688年英国光荣革命开启后续宪政与联盟格局变化；当前不绘制17世纪真实边界，仅作时间轴语境节点"],
+        [Date.UTC(1648, 9, 24), "威斯特伐利亚和约", "1648年三十年战争结束，常被视为近代欧洲国家体系的重要节点；由于暂无1648底图，页面沿用1815底图作极远前史参照"]
+      ].find(([start]) => mapDateValue >= start && mapDateValue < Date.UTC(1815, 5, 9));
+      if (pre1815StageInfo) {
+        mapEraTitle.textContent = pre1815StageInfo[1];
+        mapSnapshotNote.textContent = pre1815StageInfo[2];
+        return;
+      }
       const snapshotInfo = {
-        "1815": ["维也纳体系下的世界", "1815版世界底图 · 1861、1867、1871欧洲节点另作局部近似"],
+        "1815": ["维也纳体系下的世界", "1815版世界底图 · 1648—1814为前史参照阶段；1861、1867、1871欧洲节点另作局部近似"],
         "1880": ["帝国扩张与民族国家时代", "1880版边界快照 · 当前用于1880—1899"],
         "1900": ["世纪之交的世界", "1900版边界快照 · 当前用于1900—1913"],
         "1914": ["第一次世界大战时期的世界", "1914版边界快照 · 当前用于1914—1919"],
@@ -4113,12 +4256,8 @@
         .forEach(feature => {
           const p = feature.properties;
           if (!Number.isFinite(p.labelLng) || !Number.isFinite(p.labelLat)) return;
-          const displayName = p.NAME === "Russian Empire" && mapDateValue >= Date.UTC(1917, 10, 7)
-            ? "苏维埃俄国及内战诸政权（沿用1914边界）"
-            : p.NAME === "Russian Empire" && mapDateValue >= Date.UTC(1917, 2, 15)
-              ? "俄罗斯共和国（沿用1914边界）"
-            : p.NAME === "USSR" && mapDateValue < Date.UTC(1922, 11, 30) ? "苏维埃俄国" : p.nameZh;
-          const flagInfo = zoom >= 2.5 ? flagInfoForCountry(p.NAME) : null;
+          const displayName = historicalDisplayNameForCountry(p.NAME, p.nameZh, mapDateValue);
+          const flagInfo = zoom >= 2.5 ? flagInfoForCountry(p.NAME, mapDateValue) : null;
           const point = historicalMap.project([p.labelLng, p.labelLat]);
           if (point.x < -80 || point.y < -30 || point.x > historicalMap.getCanvas().clientWidth + 80 || point.y > historicalMap.getCanvas().clientHeight + 30) return;
           const flagWidth = flagInfo ? (flagInfo.backgrounds.length > 1 ? 40 : 25) : 0;
@@ -4390,9 +4529,10 @@
           source: "ww1-occupation",
           filter: ["==", ["get", "isFrontline"], true],
           paint: {
-            "line-color": "#342f2a",
-            "line-width": ["interpolate", ["linear"], ["zoom"], 1, 1.25, 5, 2.35, 9, 3.4],
-            "line-opacity": .98
+            "line-color": "#685d78",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 1, 1.1, 5, 1.9, 9, 2.6],
+            "line-dasharray": [2, 1.4],
+            "line-opacity": 0
           }
         });
         historicalMap.addSource("ww2-europe", { type: "geojson", data: prepareWw2Snapshot(ww2SnapshotForDate()).data });

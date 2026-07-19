@@ -2361,7 +2361,9 @@
     let historicalMap = null;
     let historicalMapReady = false;
     let mapFocusCardId = null;
-    let mapDateValue = Date.UTC(1918, 0, 1);
+    const defaultMapDateValue = Date.UTC(1918, 0, 1);
+    const defaultMapCamera = { center: [14, 44], zoom: 1.35 };
+    let mapDateValue = defaultMapDateValue;
     let mapCountryLabelMarkers = [];
     let mapCityLabelMarkers = [];
     let mapFocusMarkers = [];
@@ -2384,6 +2386,11 @@
       String(value || "").split(",").filter(Boolean).forEach(item => {
         if (!allowedValues || allowedValues.includes(item)) target.add(item);
       });
+    }
+
+    function numberParam(params, name) {
+      const value = params.get(name);
+      return value !== null && value.trim() !== "" ? Number(value) : NaN;
     }
 
     function yearAtTimelinePixel(pixel) {
@@ -2473,8 +2480,8 @@
         activeLevels = params.has("levels") ? new Set(String(params.get("levels") || "").split(",").filter(level => levels.includes(level))) : null;
         activeCountryQuery = params.get("country") || "";
         countryFilter.value = activeCountryQuery;
-        const routeZoom = Number(params.get("zoom"));
-        if (Number.isFinite(routeZoom)) zoom = Math.max(.45, Math.min(8, routeZoom));
+        const routeZoom = numberParam(params, "zoom");
+        zoom = Number.isFinite(routeZoom) ? Math.max(.45, Math.min(8, routeZoom)) : defaultZoom;
         zoomSlider.value = zoom;
         timelineFocusId = timelineById[params.get("focus")] ? params.get("focus") : null;
         if (timelineFocusId) selectedId = timelineFocusId;
@@ -2487,7 +2494,13 @@
           scheduleTimelineCardFocus(timelineFocusId, () => { applyingRoute = false; });
         } else {
           requestAnimationFrame(() => {
-            if (params.has("year")) jumpToYear(params.get("year"));
+            const routeYear = numberParam(params, "year");
+            if (Number.isFinite(routeYear)) jumpToYear(routeYear);
+            else {
+              timelineFrame.scrollLeft = 0;
+              yearJumpInput.value = "";
+              updateDensityWindow();
+            }
             applyingRoute = false;
           });
         }
@@ -2496,16 +2509,16 @@
 
       if (view === "map") {
         const routeDate = Date.parse(params.get("date") || "");
-        if (Number.isFinite(routeDate)) mapDateValue = clampMapDate(routeDate);
+        mapDateValue = Number.isFinite(routeDate) ? clampMapDate(routeDate) : defaultMapDateValue;
         mapFocusCardId = mapCardLocations[params.get("mapCard")] ? params.get("mapCard") : null;
         updateMapTimeControls();
         showView("map", { skipHistory: true, preserveScroll: true });
-        const lng = Number(params.get("lng"));
-        const lat = Number(params.get("lat"));
-        const routeMapZoom = Number(params.get("mapZoom"));
+        const lng = numberParam(params, "lng");
+        const lat = numberParam(params, "lat");
+        const routeMapZoom = numberParam(params, "mapZoom");
         pendingMapCamera = Number.isFinite(lng) && Number.isFinite(lat) && Number.isFinite(routeMapZoom)
           ? { center: [lng, lat], zoom: Math.max(0, Math.min(12, routeMapZoom)) }
-          : null;
+          : defaultMapCamera;
         window.setTimeout(() => {
           if (!historicalMapReady) return;
           if (mapFocusCardId) applyMapCardFocus(false);
@@ -4476,8 +4489,8 @@
           sources: {},
           layers: [{ id: "paper-sea", type: "background", paint: { "background-color": "#aebfbe" } }]
         },
-        center: [14, 44],
-        zoom: 1.35,
+        center: defaultMapCamera.center,
+        zoom: defaultMapCamera.zoom,
         minZoom: 0.55,
         maxZoom: 11,
         renderWorldCopies: false,

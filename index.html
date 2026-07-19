@@ -2036,6 +2036,24 @@
       .timeline-view { padding: 24px 16px 42px; }
       .timeline-frame { height: 560px; }
       .timeline-locator { width: auto; min-width: 0; }
+      .timeline-toolbar {
+        left: 16px;
+        right: 16px;
+        height: auto;
+        min-height: 56px;
+        display: grid;
+        grid-template-columns: auto 34px minmax(72px, 1fr) 34px;
+        gap: 6px 8px;
+        padding: 8px 10px;
+        border-radius: 22px;
+      }
+      .timeline-toolbar #zoom-slider { width: 100%; min-width: 0; }
+      .timeline-toolbar .zoom-readout {
+        grid-column: 1 / -1;
+        min-width: 0;
+        text-align: center;
+        font-size: 12px;
+      }
       .detail-grid { grid-template-columns: 1fr; }
       .wide { grid-column: span 1; }
       .article h1 { font-size: 40px; }
@@ -2460,15 +2478,19 @@
         zoomSlider.value = zoom;
         timelineFocusId = timelineById[params.get("focus")] ? params.get("focus") : null;
         if (timelineFocusId) selectedId = timelineFocusId;
+        if (timelineFocusId) prepareTimelineFiltersForFocus();
         renderFilters();
         renderLevelFilters();
         showView("timeline", { skipHistory: true, preserveScroll: true });
         zoomReadout.textContent = `${Math.round(zoom * 100)}% · ${semanticLevelText()}`;
-        requestAnimationFrame(() => {
-          if (timelineFocusId) centerTimelineCard(timelineFocusId);
-          else if (params.has("year")) jumpToYear(params.get("year"));
-          applyingRoute = false;
-        });
+        if (timelineFocusId) {
+          scheduleTimelineCardFocus(timelineFocusId, () => { applyingRoute = false; });
+        } else {
+          requestAnimationFrame(() => {
+            if (params.has("year")) jumpToYear(params.get("year"));
+            applyingRoute = false;
+          });
+        }
         return;
       }
 
@@ -5621,6 +5643,7 @@
         reserveRangeLane(placement.side, placement.lane, right);
         const el = document.createElement("button");
         el.className = "range";
+        if (card.id === selectedId) el.classList.add("selected");
         el.style.setProperty("--main-color", tagColor(card.mainTag || card.tags[0]));
         el.style.left = `${left}px`;
         el.style.top = `${placement.side === "upper" ? axisY - 44 - placement.lane * rangeLaneStep : axisY + 20 + placement.lane * rangeLaneStep}px`;
@@ -5791,12 +5814,40 @@
       window.setTimeout(() => { button.textContent = original; }, 1600);
     }
 
+    function setTimelineFramePosition(left, top = timelineFrame.scrollTop) {
+      const previousScrollBehavior = timelineFrame.style.scrollBehavior;
+      timelineFrame.style.scrollBehavior = "auto";
+      timelineFrame.scrollLeft = Math.max(0, left);
+      timelineFrame.scrollTop = Math.max(0, top);
+      timelineFrame.style.scrollBehavior = previousScrollBehavior;
+      updateDensityWindow();
+    }
+
     function centerTimelineCard(id) {
       const card = timelineById[id];
       if (!card) return;
       const x = semanticPointX(card);
-      timelineFrame.scrollLeft = Math.max(0, x - timelineFrame.clientWidth / 2);
-      updateDensityWindow();
+      const selectedElement = timelineCanvas.querySelector(".timeline-label.selected")
+        || timelineCanvas.querySelector(".range.selected")
+        || timelineCanvas.querySelector(".node.selected");
+      const targetTop = selectedElement
+        ? selectedElement.offsetTop + selectedElement.offsetHeight / 2 - timelineFrame.clientHeight / 2
+        : timelineFrame.scrollTop;
+      setTimelineFramePosition(x - timelineFrame.clientWidth / 2, targetTop);
+    }
+
+    function scheduleTimelineCardFocus(id, callback) {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        centerTimelineCard(id);
+        callback?.();
+      }));
+    }
+
+    function prepareTimelineFiltersForFocus() {
+      if (!window.matchMedia("(max-width: 860px)").matches) return;
+      filtersPanel.classList.add("collapsed");
+      filterToggle.textContent = "展开";
+      filterToggle.setAttribute("aria-expanded", "false");
     }
 
     function focusCardOnTimeline(id) {
@@ -5811,12 +5862,12 @@
       const requiredZoom = semanticRequiredZoom(card, timelineCards);
       zoom = Math.max(zoom, Math.min(8, requiredZoom + .2));
       zoomSlider.value = zoom;
+      prepareTimelineFiltersForFocus();
       renderFilters();
       renderLevelFilters();
       showView("timeline", { historyMode: "push", preserveScroll: true });
       zoomReadout.textContent = `${Math.round(zoom * 100)}% · ${semanticLevelText()}`;
-      requestAnimationFrame(() => {
-        centerTimelineCard(id);
+      scheduleTimelineCardFocus(id, () => {
         syncUrl("replace");
       });
     }
@@ -5937,8 +5988,11 @@
       if (activeLevels === null) renderLevelFilters();
       zoomReadout.textContent = `${Math.round(zoom * 100)}% · ${semanticLevelText()}`;
       renderTimeline();
-      timelineFrame.scrollLeft = Math.max(0, 70 + ratio * newAxisWidth - anchorOffset);
-      updateDensityWindow();
+      if (timelineFocusId && timelineById[timelineFocusId]) {
+        scheduleTimelineCardFocus(timelineFocusId, () => syncUrl("replace"));
+      } else {
+        setTimelineFramePosition(70 + ratio * newAxisWidth - anchorOffset);
+      }
     }
 
     document.getElementById("zoom-in").addEventListener("click", () => setZoom(zoom + .25));

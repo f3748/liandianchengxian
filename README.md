@@ -16,3 +16,17 @@
 - `historical-basemaps-LICENSE.txt` / `maplibre-LICENSE.txt`：第三方许可证
 
 GitHub Pages 发布时选择从当前分支的根目录发布即可。
+
+## 卡片数据编辑流程
+
+`cards.json` 是卡片内容的唯一权威来源，`cards-data.js` 是供静态页面加载的自动生成文件。不要手工编辑 `cards-data.js`，也不要从它反向恢复或合并数据。
+
+修改卡片时按以下顺序操作：
+
+1. 只编辑 `cards.json`，并保留已有卡片 ID；修改标题或关系时同步维护双向关系。
+2. 运行 `python3 tools/cards.py check`，完成结构、枚举、镜像字段、标签和全量关系检查。
+3. 运行 `python3 tools/cards.py build`，从权威 JSON 确定性生成 `cards-data.js`。
+4. 运行 `python3 tools/cards.py verify`，确认权威源合法且生成物没有漂移。
+5. 审查两份文件的 diff 后再提交；不要只提交其中一份。
+
+`python3 tools/cards.py` 默认执行只读的 `verify`。任何校验失败都会以非零状态退出；`build` 仅在 `cards.json` 完整通过校验后写入生成物，并使用同目录临时文件原子替换。

@@ -91,7 +91,7 @@ REQUIRED_MIRRORS = {
     "一句话概括": "summary",
 }
 
-TIMELINE_KINDS = {"point", "range"}
+TIMELINE_KINDS = {"point", "range", "compound"}
 TIMELINE_ERAS = {"BCE", "CE"}
 TIMELINE_PRECISIONS = {"day", "month", "year", "decade", "century", "era"}
 TIMELINE_QUALIFIERS = {"exact", "circa", "before", "after"}
@@ -146,6 +146,49 @@ PHASE_TWO_EXPECTED = {
 }
 PHASE_TWO_IDS = set(PHASE_TWO_EXPECTED)
 STRUCTURED_TIMELINE_IDS = BCE_PHASE_ONE_IDS | PHASE_TWO_IDS
+
+# First controlled compound-timeline batch. Compound parts deliberately support
+# only closed, single-era, year-precision markers and segments in this phase.
+COMPOUND_PHASE_ONE_EXPECTED = {
+    "extra1971": (
+        "first-journey",
+        (
+            ("first-journey", "第一次出使", "segment", ("BCE", 138, "year", "circa"), ("BCE", 126, "year", "circa")),
+            ("second-journey", "第二次出使", "marker", ("BCE", 119, "year", "circa"), None),
+        ),
+    ),
+    "extra2114": (
+        "monopoly-established",
+        (
+            ("monopoly-established", "专卖建立", "marker", ("BCE", 119, "year", "circa"), None),
+            ("salt-iron-debate", "盐铁会议", "marker", ("BCE", 81, "year", "exact"), None),
+        ),
+    ),
+    "extra2225": (
+        "first-war",
+        (
+            ("first-war", "第一次战争", "segment", ("BCE", 343, "year", "circa"), ("BCE", 341, "year", "circa")),
+            ("second-war", "第二次战争", "segment", ("BCE", 326, "year", "circa"), ("BCE", 304, "year", "circa")),
+            ("third-war", "第三次战争", "segment", ("BCE", 298, "year", "circa"), ("BCE", 290, "year", "circa")),
+        ),
+    ),
+    "extra2242": (
+        "first-settlement",
+        (
+            ("first-settlement", "第一次宪制安排", "marker", ("BCE", 27, "year", "exact"), None),
+            ("second-settlement", "第二次宪制安排", "marker", ("BCE", 23, "year", "exact"), None),
+        ),
+    ),
+    "extra640": (
+        "project-phase",
+        (
+            ("project-phase", "项目推进", "segment", ("CE", 1899, "year", "circa"), ("CE", 1918, "year", "exact")),
+            ("construction-start", "施工启动", "marker", ("CE", 1903, "year", "exact"), None),
+        ),
+    ),
+}
+COMPOUND_PHASE_ONE_IDS = set(COMPOUND_PHASE_ONE_EXPECTED)
+STRUCTURED_TIMELINE_IDS |= COMPOUND_PHASE_ONE_IDS
 
 # Representative unmigrated CE cards protect the legacy inference contract.
 # These exact snapshots are intentionally independent of structured timeline
@@ -552,6 +595,69 @@ def validate_timeline(
         return
 
     kind = timeline.get("kind")
+    if kind == "compound":
+        if not validate_exact_keys(timeline, {"kind", "defaultPart", "parts"}, f"{path}.timeline", report, card_id):
+            return
+        default_part = timeline.get("defaultPart")
+        parts = timeline.get("parts")
+        if not isinstance(default_part, str) or not re.fullmatch(r"[a-z][a-z0-9-]*", default_part):
+            report.error(f"{path}.timeline.defaultPart", "must be a stable lowercase kebab-case key", card_id)
+        if not isinstance(parts, list) or len(parts) < 2:
+            report.error(f"{path}.timeline.parts", "must contain at least two parts", card_id)
+            return
+        keys: set[str] = set()
+        era: str | None = None
+        previous_start: tuple[int, int, int] | None = None
+        previous_segment_end: tuple[int, int, int] | None = None
+        for index, part in enumerate(parts):
+            part_path = f"{path}.timeline.parts[{index}]"
+            role = part.get("role") if isinstance(part, dict) else None
+            expected_part_keys = {"key", "label", "role", "start"} | ({"end"} if role == "segment" else set())
+            if not validate_exact_keys(part, expected_part_keys, part_path, report, card_id):
+                continue
+            key = part.get("key")
+            label = part.get("label")
+            if not isinstance(key, str) or not re.fullmatch(r"[a-z][a-z0-9-]*", key):
+                report.error(f"{part_path}.key", "must be a stable lowercase kebab-case key", card_id)
+            elif key in keys:
+                report.error(f"{part_path}.key", f"duplicate compound part key {key!r}", card_id)
+            else:
+                keys.add(key)
+            if not isinstance(label, str) or not label.strip() or len(label) > 16:
+                report.error(f"{part_path}.label", "must be a non-empty short label of at most 16 characters", card_id)
+            if role not in {"marker", "segment"}:
+                report.error(f"{part_path}.role", "expected 'marker' or 'segment'", card_id)
+                continue
+            start_valid = validate_timeline_endpoint(part.get("start"), f"{part_path}.start", report, card_id)
+            end_valid = role == "marker" or validate_timeline_endpoint(part.get("end"), f"{part_path}.end", report, card_id)
+            endpoints = [part.get("start")] + ([part.get("end")] if role == "segment" else [])
+            if start_valid and end_valid:
+                if any(endpoint["datePrecision"] != "year" for endpoint in endpoints):
+                    report.error(part_path, "phase-one compound endpoints must use year precision", card_id)
+                if any(endpoint["qualifier"] not in {"exact", "circa"} for endpoint in endpoints):
+                    report.error(part_path, "phase-one compound qualifiers must be exact or circa", card_id)
+                part_era = endpoints[0]["era"]
+                if any(endpoint["era"] != part_era for endpoint in endpoints):
+                    report.error(part_path, "compound segments must be single-era", card_id)
+                if era is None:
+                    era = part_era
+                elif era != part_era:
+                    report.error(f"{path}.timeline.parts", "all compound parts must use one era", card_id)
+                start_value = timeline_endpoint_value(endpoints[0])
+                if role == "segment":
+                    end_value = timeline_endpoint_value(endpoints[1])
+                    if start_value > end_value:
+                        report.error(part_path, "segment start must not be later than end", card_id)
+                    if previous_segment_end is not None and start_value <= previous_segment_end:
+                        report.error(f"{path}.timeline.parts", "continuous segments must not overlap", card_id)
+                    previous_segment_end = end_value
+                if previous_start is not None and start_value < previous_start:
+                    report.error(f"{path}.timeline.parts", "parts must be ordered chronologically by start", card_id)
+                previous_start = start_value
+        if isinstance(default_part, str) and default_part not in keys:
+            report.error(f"{path}.timeline.defaultPart", "must reference an existing part key", card_id)
+        return
+
     expected = {"kind", "start"} if kind == "point" else {"kind", "start", "end"}
     if not validate_exact_keys(timeline, expected, f"{path}.timeline", report, card_id):
         return
@@ -744,8 +850,8 @@ def validate_timeline_migration(
         report.error("$timelineMigration", f"missing approved structured timeline IDs {missing}")
     if extra:
         report.error("$timelineMigration", f"unexpected structured timeline IDs {extra}")
-    if len(structured_ids) != 60:
-        report.error("$timelineMigration", f"expected exactly 60 structured cards, got {len(structured_ids)}")
+    if len(structured_ids) != 65:
+        report.error("$timelineMigration", f"expected exactly 65 structured cards, got {len(structured_ids)}")
     if timeline_endpoint_value({"era": "BCE", "year": 1})[0] != 0 or timeline_endpoint_value({"era": "BCE", "year": 2})[0] != -1:
         report.error("$timelineMigration", "astronomical conversion must map 1 BCE to 0 and 2 BCE to -1")
     for card_id in sorted(BCE_PHASE_ONE_IDS & structured_ids):
@@ -799,6 +905,25 @@ def validate_timeline_migration(
         expected = (expected_kind, expected_start, expected_end)
         if actual != expected:
             report.error("$timelineMigration", f"expected phase-two value {expected!r}, got {actual!r}", card_id)
+
+    endpoint_tuple = lambda endpoint: (
+        endpoint.get("era"), endpoint.get("year"), endpoint.get("datePrecision"), endpoint.get("qualifier")
+    ) if isinstance(endpoint, dict) else None
+    for card_id in sorted(COMPOUND_PHASE_ONE_IDS & structured_ids):
+        timeline = by_id[card_id].get("timeline")
+        if not isinstance(timeline, dict):
+            continue
+        actual_parts = tuple(
+            (
+                part.get("key"), part.get("label"), part.get("role"), endpoint_tuple(part.get("start")),
+                endpoint_tuple(part.get("end")) if part.get("role") == "segment" else None,
+            )
+            for part in timeline.get("parts", []) if isinstance(part, dict)
+        )
+        actual = (timeline.get("defaultPart"), actual_parts)
+        expected = COMPOUND_PHASE_ONE_EXPECTED[card_id]
+        if timeline.get("kind") != "compound" or actual != expected:
+            report.error("$timelineMigration", f"expected compound value {expected!r}, got {actual!r}", card_id)
 
     for card_id, (time_text, kind, start, end) in LEGACY_CE_GOLDEN.items():
         card = by_id.get(card_id)

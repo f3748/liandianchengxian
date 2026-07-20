@@ -1025,6 +1025,10 @@
       box-shadow: 0 0 0 4px rgba(164, 63, 53, .18), 0 0 0 1.5px rgba(164, 63, 53, .42), 0 8px 18px rgba(65, 48, 28, .18);
     }
 
+    .node.active-part .dot {
+      box-shadow: 0 0 0 5px rgba(47, 119, 116, .18), 0 0 0 2px rgba(47, 119, 116, .52), 0 8px 18px rgba(65, 48, 28, .18);
+    }
+
     .timeline-label {
       position: absolute;
       width: 168px;
@@ -1056,6 +1060,12 @@
       box-shadow: 0 12px 26px rgba(164, 63, 53, .12);
     }
 
+    .timeline-label.active-part,
+    .range.active-part {
+      outline: 2px solid rgba(47, 119, 116, .48);
+      outline-offset: 2px;
+    }
+
     .timeline-label .meta {
       display: flex;
       justify-content: space-between;
@@ -1074,6 +1084,22 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .timeline-part-caption {
+      margin: -1px 0 6px;
+      color: #246460;
+      font-size: 10px;
+      font-weight: 760;
+      line-height: 1.2;
+      letter-spacing: .02em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .range-tip .timeline-part-caption {
+      margin: 0 0 7px;
     }
 
     .grade-badge {
@@ -2365,7 +2391,9 @@
       byEra: Object.freeze({
         CE: allTimelineCards.filter(card => card.timelineEra === "CE").length,
         BCE: allTimelineCards.filter(card => card.timelineEra === "BCE").length
-      })
+      }),
+      compound: Object.freeze(allTimelineCards.filter(card => card.kind === "compound").map(card => card.id)),
+      geometryCount: allTimelineCards.reduce((count, card) => count + (card.kind === "compound" ? card.parts.length : 1), 0)
     });
 
     const views = document.querySelectorAll(".view");
@@ -2400,6 +2428,7 @@
     const detailBackStack = [];
     let detailReturnState = null;
     let timelineFocusId = null;
+    let timelineFocusPartKey = null;
     let urlReady = false;
     let applyingRoute = false;
     let urlSyncTimer = null;
@@ -2463,7 +2492,13 @@
         if (activeTags.size) params.set("tags", Array.from(activeTags).join(","));
         if (activeLevels !== null) params.set("levels", Array.from(activeLevels).join(","));
         if (activeCountryQuery.trim()) params.set("country", activeCountryQuery.trim());
-        if (timelineFocusId && timelineById[timelineFocusId]) params.set("focus", timelineFocusId);
+        if (timelineFocusId && timelineById[timelineFocusId]) {
+          params.set("focus", timelineFocusId);
+          const focusCard = timelineById[timelineFocusId];
+          if (focusCard.kind === "compound" && timelinePart(focusCard, timelineFocusPartKey)) {
+            params.set("part", timelineFocusPartKey);
+          }
+        }
       } else if (view === "map") {
         params.set("date", mapDateIso(mapDateValue));
         if (mapFocusCardId && mapCardLocations[mapFocusCardId]) params.set("mapCard", mapFocusCardId);
@@ -2531,6 +2566,7 @@
         zoom = Number.isFinite(routeZoom) ? Math.max(.45, Math.min(8, routeZoom)) : defaultZoom;
         zoomSlider.value = zoom;
         timelineFocusId = timelineById[params.get("focus")] ? params.get("focus") : null;
+        timelineFocusPartKey = timelineFocusId ? resolveTimelinePartKey(timelineById[timelineFocusId], params.get("part")) : null;
         const routeEra = timelineFocusId
           ? timelineById[timelineFocusId].timelineEra
           : params.get("era") === "BCE" ? "BCE" : "CE";
@@ -2600,6 +2636,7 @@
         document.getElementById("card-hall-country").value = hallCountryQuery;
       }
       timelineFocusId = null;
+      timelineFocusPartKey = null;
       showView(view, { skipHistory: true, preserveScroll: true });
       applyingRoute = false;
     }
@@ -2652,6 +2689,7 @@
     navButtons.forEach(btn => btn.addEventListener("click", () => {
       if (btn.dataset.view === "timeline") {
         timelineFocusId = null;
+        timelineFocusPartKey = null;
         setTimelineEra("CE", { render: false });
       }
       if (btn.dataset.view === "map") clearMapCardFocus(false);
@@ -2660,6 +2698,7 @@
     document.getElementById("brand-home").addEventListener("click", () => showView("home"));
     document.getElementById("home-timeline-button").addEventListener("click", () => {
       timelineFocusId = null;
+      timelineFocusPartKey = null;
       setTimelineEra("CE", { render: false });
       showView("timeline");
     });
@@ -4956,8 +4995,71 @@
 
     function structuredTimelineData(card) {
       const timeline = card.timeline;
-      const validKind = timeline && ["point", "range"].includes(timeline.kind);
+      const validKind = timeline && ["point", "range", "compound"].includes(timeline.kind);
       const timelineKeys = timeline && Object.keys(timeline).sort().join(",");
+      if (timeline?.kind === "compound") {
+        const validKeys = timelineKeys === "defaultPart,kind,parts";
+        const validPartKey = key => typeof key === "string" && /^[a-z][a-z0-9-]*$/.test(key);
+        const parts = Array.isArray(timeline.parts) ? timeline.parts : [];
+        const seenKeys = new Set();
+        let timelineEra = null;
+        let previousStartValue = -Infinity;
+        let previousSegmentEndValue = -Infinity;
+        const normalizedParts = parts.map(part => {
+          const role = part?.role;
+          const partKeys = part && Object.keys(part).sort().join(",");
+          const expectedKeys = role === "segment" ? "end,key,label,role,start" : "key,label,role,start";
+          const validStart = validTimelineEndpoint(part?.start);
+          const validEnd = role === "marker" || validTimelineEndpoint(part?.end);
+          if (
+            !part || partKeys !== expectedKeys || !["marker", "segment"].includes(role)
+            || !validPartKey(part.key) || seenKeys.has(part.key)
+            || typeof part.label !== "string" || !part.label.trim() || part.label.length > 16
+            || !validStart || !validEnd
+          ) throw new Error(`Timeline contract error for ${card.id}: invalid compound part`);
+          const endpoints = role === "segment" ? [part.start, part.end] : [part.start];
+          if (endpoints.some(endpoint => endpoint.datePrecision !== "year" || !["exact", "circa"].includes(endpoint.qualifier))) {
+            throw new Error(`Timeline contract error for ${card.id}: unsupported compound precision or qualifier`);
+          }
+          const partEra = part.start.era;
+          if (endpoints.some(endpoint => endpoint.era !== partEra) || (timelineEra && timelineEra !== partEra)) {
+            throw new Error(`Timeline contract error for ${card.id}: compound parts must use one era`);
+          }
+          timelineEra = partEra;
+          seenKeys.add(part.key);
+          const startValue = structuredEndpointValue(part.start);
+          const endValue = role === "segment" ? structuredEndpointValue(part.end) : startValue;
+          if (startValue < previousStartValue || endValue < startValue) {
+            throw new Error(`Timeline contract error for ${card.id}: compound parts are out of order`);
+          }
+          if (role === "segment" && startValue <= previousSegmentEndValue) {
+            throw new Error(`Timeline contract error for ${card.id}: compound segments must not overlap`);
+          }
+          if (role === "segment") previousSegmentEndValue = endValue;
+          previousStartValue = startValue;
+          return {
+            key: part.key,
+            label: part.label,
+            role,
+            kind: role === "segment" ? "range" : "point",
+            ...(role === "segment"
+              ? { startDate: structuredEndpointPosition(part.start), endDate: structuredEndpointPosition(part.end) }
+              : { date: structuredEndpointPosition(part.start) }),
+            sortValue: startValue
+          };
+        });
+        if (!validKeys || normalizedParts.length < 2 || !seenKeys.has(timeline.defaultPart)) {
+          throw new Error(`Timeline contract error for ${card.id}: invalid structured compound timeline`);
+        }
+        return {
+          kind: "compound",
+          parts: normalizedParts,
+          defaultPartKey: timeline.defaultPart,
+          sortValue: normalizedParts[0].sortValue,
+          timelineEra,
+          timelineSource: "structured"
+        };
+      }
       const validKeys = timeline?.kind === "point" ? timelineKeys === "kind,start" : timelineKeys === "end,kind,start";
       const validStart = validKind && validTimelineEndpoint(timeline.start);
       const validEnd = timeline?.kind === "point" || validTimelineEndpoint(timeline?.end);
@@ -4974,6 +5076,42 @@
       const endValue = structuredEndpointValue(timeline.end);
       if (endValue < startValue) throw new Error(`Timeline contract error for ${card.id}: start is later than end`);
       return { kind: "range", startDate: startPosition, endDate: structuredEndpointPosition(timeline.end), sortValue: startValue, timelineEra, timelineSource: "structured" };
+    }
+
+    function timelinePart(card, partKey) {
+      return card?.kind === "compound" ? card.parts.find(part => part.key === partKey) || null : null;
+    }
+
+    function resolveTimelinePartKey(card, requestedKey = null) {
+      if (card?.kind !== "compound") return null;
+      return timelinePart(card, requestedKey)?.key || card.defaultPartKey || card.parts[0]?.key || null;
+    }
+
+    function timelineRenderItems(card) {
+      if (card.kind !== "compound") return [card];
+      return card.parts.map(part => ({
+        ...card,
+        ...part,
+        timelinePartKey: part.key,
+        timelinePartLabel: part.label,
+        timelinePartRole: part.role
+      }));
+    }
+
+    function openTimelineItem(card) {
+      if (card.timelinePartKey) {
+        timelineFocusId = card.id;
+        timelineFocusPartKey = card.timelinePartKey;
+        syncUrl("replace");
+      }
+      setSelected(card.id, "detail");
+    }
+
+    function timelineCardValues(card) {
+      if (card.kind === "compound") {
+        return card.parts.flatMap(part => part.kind === "range" ? [part.startDate, part.endDate] : [part.date]);
+      }
+      return card.kind === "range" ? [card.startDate, card.endDate] : [card.date];
     }
 
     function buildTimelineCards(sourceCards) {
@@ -4994,7 +5132,7 @@
     }
 
     function timelineRange(items) {
-      const values = items.flatMap(card => card.kind === "range" ? [card.startDate, card.endDate] : [card.date])
+      const values = items.flatMap(timelineCardValues)
         .map(timelineValue)
         .filter(Number.isFinite);
       if (!values.length) return { start: new Date("1914-01-01").getTime(), end: new Date("1933-01-31").getTime() };
@@ -5593,6 +5731,12 @@
     }
 
     function semanticPointX(card) {
+      if (card.kind === "compound") {
+        const partKey = card.id === timelineFocusId ? timelineFocusPartKey : card.defaultPartKey;
+        const part = timelinePart(card, partKey) || card.parts[0];
+        if (part.kind === "range") return (xForDate(part.startDate) + xForDate(part.endDate)) / 2;
+        return xForDate(part.date);
+      }
       if (card.kind === "range") {
         return (xForDate(card.startDate) + xForDate(card.endDate)) / 2;
       }
@@ -5712,7 +5856,10 @@
       const binCount = Math.max(48, Math.min(180, Math.round(axisWidthEstimate() / 34)));
       const bins = Array.from({ length: binCount }, () => 0);
       sourceCards.forEach(card => {
-        const dates = card.kind === "range" ? [card.startDate, card.endDate] : [card.date];
+        const part = card.kind === "compound" ? timelinePart(card, card.defaultPartKey) || card.parts[0] : card;
+        const dates = card.kind === "compound"
+          ? [part.kind === "range" ? part.startDate : part.date]
+          : card.kind === "range" ? [card.startDate, card.endDate] : [card.date];
         dates.forEach(date => {
           const index = Math.max(0, Math.min(binCount - 1, Math.floor(pctForDate(date) * binCount)));
           bins[index] += card.level === "S" ? 3 : card.level === "A" ? 2 : 1;
@@ -5792,6 +5939,7 @@
 
       const baseVisibleCards = cardsMatchingBaseFilters();
       const visibleCards = baseVisibleCards.filter(card => hasActiveLevel(card, baseVisibleCards));
+      const visibleItems = visibleCards.flatMap(timelineRenderItems);
       visibleCount.textContent = `${visibleCards.length} / ${timelineCards.length}`;
       renderDensityNavigator(visibleCards);
 
@@ -5821,7 +5969,7 @@
         }
         return { side: "lower", lane: rangeGroups.lower.length };
       };
-      visibleCards.filter(card => card.kind === "range").sort((a, b) => timelineValue(a.startDate) - timelineValue(b.startDate)).forEach((card) => {
+      visibleItems.filter(card => card.kind === "range").sort((a, b) => timelineValue(a.startDate) - timelineValue(b.startDate)).forEach((card) => {
         const left = xForDate(card.startDate);
         const right = xForDate(card.endDate);
         const placement = chooseRangePlacement(left);
@@ -5829,6 +5977,9 @@
         const el = document.createElement("button");
         el.className = "range";
         if (card.id === selectedId) el.classList.add("selected");
+        if (card.timelinePartKey === timelineFocusPartKey && card.id === timelineFocusId) el.classList.add("active-part");
+        el.dataset.timelineCard = card.id;
+        if (card.timelinePartKey) el.dataset.timelinePart = card.timelinePartKey;
         el.style.setProperty("--main-color", tagColor(card.mainTag || card.tags[0]));
         el.style.left = `${left}px`;
         el.style.top = `${placement.side === "upper" ? axisY - 44 - placement.lane * rangeLaneStep : axisY + 20 + placement.lane * rangeLaneStep}px`;
@@ -5841,21 +5992,22 @@
           top: rangeTop,
           bottom: rangeTop + 24
         });
-        el.innerHTML = `${rangeWidth >= 118 ? htmlEscape(card.title) : ""}<span class="range-tip"><span class="meta"><span>${htmlEscape(card.timeText)}</span><span class="grade-badge">${htmlEscape(card.level)} 级</span></span><strong>${htmlEscape(card.title)}</strong><span class="summary">${htmlEscape(card.summary)}</span></span>`;
-        el.title = `${card.title} · ${card.timeText}`;
+        const rangeText = card.timelinePartLabel || card.title;
+        const partCaption = card.timelinePartLabel ? `<span class="timeline-part-caption">多阶段 · ${htmlEscape(card.timelinePartLabel)}</span>` : "";
+        el.innerHTML = `${rangeWidth >= 118 ? htmlEscape(rangeText) : ""}<span class="range-tip"><span class="meta"><span>${htmlEscape(card.timeText)}</span><span class="grade-badge">${htmlEscape(card.level)} 级</span></span>${partCaption}<strong>${htmlEscape(card.title)}</strong><span class="summary">${htmlEscape(card.summary)}</span></span>`;
+        el.title = `${card.title} · ${card.timeText}${card.timelinePartLabel ? ` · ${card.timelinePartLabel}` : ""}`;
         el.addEventListener("mouseenter", positionRangeTip);
         el.addEventListener("mousemove", positionRangeTip);
-        el.addEventListener("click", () => setSelected(card.id, "detail"));
+        el.addEventListener("click", () => openTimelineItem(card));
         timelineCanvas.appendChild(el);
       });
       const lowerRangeBottom = maxLowerRangeLane >= 0 ? axisY + 20 + maxLowerRangeLane * rangeLaneStep + 24 : axisY + 20;
       const upperRangeTop = maxUpperRangeLane >= 0 ? axisY - 44 - maxUpperRangeLane * rangeLaneStep : axisY - 44;
 
-      const pointCards = visibleCards.filter(card => card.kind !== "range").sort((a, b) => timelineValue(a.date) - timelineValue(b.date));
+      const pointCards = visibleItems.filter(card => card.kind !== "range").sort((a, b) => timelineValue(a.date) - timelineValue(b.date));
       const upperLaneCount = 10;
       const lowerLaneCount = 12;
       const laneStep = 58;
-      const labelHeight = 62;
       const labelGap = 8;
       const upperLabelEnd = Math.max(72, upperRangeTop - 72);
       const upperLabelStart = Math.max(42, upperLabelEnd - (upperLaneCount - 1) * laneStep);
@@ -5898,13 +6050,16 @@
         const node = document.createElement("button");
         node.className = "node";
         if (card.id === selectedId) node.classList.add("selected");
+        if (card.timelinePartKey === timelineFocusPartKey && card.id === timelineFocusId) node.classList.add("active-part");
+        node.dataset.timelineCard = card.id;
+        if (card.timelinePartKey) node.dataset.timelinePart = card.timelinePartKey;
         node.dataset.level = card.level;
         node.style.setProperty("--main-color", mainColor);
         node.style.setProperty("--sub-color", subColor);
         node.style.left = `${x}px`;
         node.style.top = `${y}px`;
         node.innerHTML = `<div class="dot"></div>`;
-        node.addEventListener("click", () => setSelected(card.id, "detail"));
+        node.addEventListener("click", () => openTimelineItem(card));
         timelineCanvas.appendChild(node);
 
         let lane = 0;
@@ -5917,6 +6072,7 @@
         const secondary = primary === upperLanes ? lowerLanes : upperLanes;
         const preferred = [...primary, ...secondary];
         const labelLeft = Math.max(12, Math.min(x - labelWidth / 2, timelineCanvas.clientWidth - labelWidth - 12));
+        const labelHeight = card.timelinePartLabel ? 76 : 62;
         let labelTop = null;
         for (const candidate of preferred) {
           const candidateTop = labelLanes[candidate];
@@ -5945,15 +6101,19 @@
         const label = document.createElement("button");
         label.className = "timeline-label";
         if (card.id === selectedId) label.classList.add("selected");
+        if (card.timelinePartKey === timelineFocusPartKey && card.id === timelineFocusId) label.classList.add("active-part");
+        label.dataset.timelineCard = card.id;
+        if (card.timelinePartKey) label.dataset.timelinePart = card.timelinePartKey;
         label.style.setProperty("--main-color", mainColor);
         label.style.left = `${labelLeft}px`;
         label.style.top = `${labelTop}px`;
         label.innerHTML = `
           <div class="meta"><span>${card.timeText}</span><span class="grade-badge">${card.level} 级</span></div>
+          ${card.timelinePartLabel ? `<div class="timeline-part-caption">多阶段 · ${htmlEscape(card.timelinePartLabel)}</div>` : ""}
           <strong>${card.title}</strong>
           <p class="summary">${card.summary}</p>
         `;
-        label.addEventListener("click", () => setSelected(card.id, "detail"));
+        label.addEventListener("click", () => openTimelineItem(card));
         timelineCanvas.appendChild(label);
       });
       scheduleUrlSync();
@@ -6015,9 +6175,12 @@
       const card = timelineById[id];
       if (!card) return;
       const x = semanticPointX(card);
-      const selectedElement = timelineCanvas.querySelector(".timeline-label.selected")
-        || timelineCanvas.querySelector(".range.selected")
-        || timelineCanvas.querySelector(".node.selected");
+      const partSelector = card.kind === "compound" && timelineFocusPartKey
+        ? `[data-timeline-card="${id}"][data-timeline-part="${timelineFocusPartKey}"]`
+        : `[data-timeline-card="${id}"]`;
+      const selectedElement = timelineCanvas.querySelector(`.timeline-label${partSelector}`)
+        || timelineCanvas.querySelector(`.range${partSelector}`)
+        || timelineCanvas.querySelector(`.node${partSelector}`);
       const targetTop = selectedElement
         ? selectedElement.offsetTop + selectedElement.offsetHeight / 2 - timelineFrame.clientHeight / 2
         : timelineFrame.scrollTop;
@@ -6038,12 +6201,13 @@
       filterToggle.setAttribute("aria-expanded", "false");
     }
 
-    function focusCardOnTimeline(id) {
+    function focusCardOnTimeline(id, partKey = null) {
       const card = timelineById[id];
       if (!card) return;
       setTimelineEra(card.timelineEra, { render: false });
       selectedId = id;
       timelineFocusId = id;
+      timelineFocusPartKey = resolveTimelinePartKey(card, partKey);
       activeTags.clear();
       activeCountryQuery = "";
       countryFilter.value = "";
@@ -6118,6 +6282,7 @@
         <div class="badges">
           <span class="badge red grade">${card.level} 级</span>
           <span class="badge">${card.type}</span>
+          ${timelineCard?.kind === "compound" ? `<span class="badge teal">多阶段</span>` : ""}
           ${card.tags.map(tag => tagBadgeHtml(tag)).join("")}
         </div>
         <h1>${card.title}</h1>
@@ -6215,6 +6380,7 @@
         const era = button.dataset.timelineEra;
         if (era === activeTimelineEra) return;
         timelineFocusId = null;
+        timelineFocusPartKey = null;
         setTimelineEra(era, { render: false });
         if (activeLevels === null) renderLevelFilters();
         renderTimeline();

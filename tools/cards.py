@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import calendar
 import hashlib
 import json
 import os
@@ -26,7 +27,7 @@ TOP_LEVEL_KEYS = {
     "proverbCards",
 }
 GROUPS = ("cards", "extraHistoryCards", "proverbCards")
-CARD_KEYS = {
+REQUIRED_CARD_KEYS = {
     "title",
     "level",
     "type",
@@ -42,6 +43,7 @@ CARD_KEYS = {
     "source",
     "id",
 }
+OPTIONAL_CARD_KEYS = {"timelineInclude", "timeline"}
 LEVELS = {"S", "A", "B", "C"}
 CARD_TYPES = {
     "事件卡",
@@ -87,6 +89,51 @@ REQUIRED_MIRRORS = {
     "主标签": "mainTag",
     "时间": "timeText",
     "一句话概括": "summary",
+}
+
+TIMELINE_KINDS = {"point", "range"}
+TIMELINE_ERAS = {"BCE", "CE"}
+TIMELINE_PRECISIONS = {"day", "month", "year", "decade", "century", "era"}
+TIMELINE_QUALIFIERS = {"exact", "circa", "before", "after"}
+
+# Phase-one migration manifest. Keeping this list in the validator makes a
+# partial, accidental, or expanded migration fail loudly in CI/review.
+BCE_PHASE_ONE_EXPECTED = {
+    "extra1925": ("point", 1754, None, "circa"), "extra1928": ("range", 1200, 1150, "circa"),
+    "extra1931": ("range", 499, 449, "exact"), "extra1932": ("range", 334, 323, "exact"),
+    "extra1934": ("range", 264, 27, "circa"), "extra1942": ("range", 268, 232, "circa"),
+    "extra1957": ("range", 264, 146, "exact"), "extra1960": ("range", 49, 27, "exact"),
+    "extra1995": ("range", 112, 111, "exact"), "extra2036": ("range", 58, 50, "exact"),
+    "extra2039": ("range", 431, 404, "exact"), "extra2040": ("range", 323, 281, "exact"),
+    "extra2041": ("range", 200, 30, "circa"), "extra2050": ("range", 1300, 700, "circa"),
+    "extra2070": ("range", 89, 63, "exact"), "extra2073": ("range", 214, 168, "exact"),
+    "extra2087": ("range", 327, 325, "exact"), "extra2138": ("range", 237, 218, "circa"),
+    "extra2139": ("range", 153, 133, "exact"), "extra2193": ("point", 621, None, "circa"),
+    "extra2200": ("point", 490, None, "exact"), "extra2201": ("point", 480, None, "exact"),
+    "extra2202": ("point", 480, None, "exact"), "extra2206": ("range", 430, 426, "exact"),
+    "extra2207": ("point", 416, None, "exact"), "extra2208": ("range", 415, 413, "exact"),
+    "extra2209": ("range", 404, 403, "exact"), "extra2212": ("range", 371, 362, "exact"),
+    "extra2213": ("range", 359, 336, "circa"), "extra2219": ("point", 287, None, "exact"),
+    "extra2226": ("range", 280, 275, "exact"), "extra2229": ("range", 264, 241, "exact"),
+    "extra2230": ("range", 218, 201, "exact"), "extra2231": ("point", 216, None, "exact"),
+    "extra2233": ("point", 202, None, "exact"), "extra2235": ("range", 133, 121, "exact"),
+    "extra2236": ("range", 91, 87, "exact"), "extra2238": ("range", 88, 79, "exact"),
+    "extra2240": ("point", 49, None, "exact"), "extra2241": ("range", 43, 30, "exact"),
+    "extra2306": ("point", 399, None, "exact"), "extra2310": ("point", 335, None, "circa"),
+    "extra2349": ("point", 186, None, "exact"), "extra2350": ("range", 167, 63, "exact"),
+    "extra2411": ("point", 539, None, "exact"), "extra2474": ("range", 1400, 1200, "circa"),
+}
+BCE_PHASE_ONE_IDS = set(BCE_PHASE_ONE_EXPECTED)
+
+# Representative unmigrated CE cards protect the legacy inference contract.
+# These exact snapshots are intentionally independent of structured timeline
+# data so existing CE positions cannot drift unnoticed.
+LEGACY_CE_GOLDEN = {
+    "card7": ("1918年至1919年", "range", "1918-06-30", "1919-12-31"),
+    "card59": ("1919年6月28日", "point", "1919-06-28", None),
+    "extra662": ("1918年3月3日", "point", "1918-03-03", None),
+    "extra667": ("1918年11月11日", "point", "1918-11-11", None),
+    "extra1232": ("1961年4—12月，1962年执行判决", "range", "1961-04-15", "1961-12-31"),
 }
 
 
@@ -384,6 +431,123 @@ def validate_relation_arrays(
         )
 
 
+def timeline_endpoint_value(endpoint: dict[str, Any]) -> tuple[int, int, int]:
+    """Return a sortable proleptic-Gregorian key using astronomical years."""
+    year = endpoint["year"] if endpoint["era"] == "CE" else 1 - endpoint["year"]
+    return year, endpoint.get("month", 6), endpoint.get("day", 15)
+
+
+def validate_timeline_endpoint(
+    endpoint: Any,
+    path: str,
+    report: ValidationReport,
+    card_id: str,
+) -> bool:
+    required = {"era", "year", "datePrecision", "qualifier"}
+    allowed = required | {"month", "day"}
+    if not isinstance(endpoint, dict):
+        report.error(path, f"expected object, got {type(endpoint).__name__}", card_id)
+        return False
+    actual = set(endpoint)
+    if not required.issubset(actual) or not actual.issubset(allowed):
+        report.error(path, describe_keys(actual, required), card_id)
+        unknown = sorted(actual - allowed)
+        if unknown:
+            report.error(path, f"unknown keys {unknown}", card_id)
+        return False
+
+    valid = True
+    era = endpoint.get("era")
+    if era not in TIMELINE_ERAS:
+        report.error(f"{path}.era", f"expected one of {sorted(TIMELINE_ERAS)}", card_id)
+        valid = False
+    year = endpoint.get("year")
+    if type(year) is not int or year <= 0:
+        report.error(f"{path}.year", "must be a positive integer; source year 0 is forbidden", card_id)
+        valid = False
+    precision = endpoint.get("datePrecision")
+    if precision not in TIMELINE_PRECISIONS:
+        report.error(f"{path}.datePrecision", f"expected one of {sorted(TIMELINE_PRECISIONS)}", card_id)
+        valid = False
+    qualifier = endpoint.get("qualifier")
+    if qualifier not in TIMELINE_QUALIFIERS:
+        report.error(f"{path}.qualifier", f"expected one of {sorted(TIMELINE_QUALIFIERS)}", card_id)
+        valid = False
+
+    month = endpoint.get("month")
+    day = endpoint.get("day")
+    if month is not None and (type(month) is not int or not 1 <= month <= 12):
+        report.error(f"{path}.month", "must be an integer from 1 to 12", card_id)
+        valid = False
+    if day is not None and (type(day) is not int or not 1 <= day <= 31):
+        report.error(f"{path}.day", "must be an integer from 1 to 31", card_id)
+        valid = False
+    if (
+        valid
+        and month is not None
+        and day is not None
+        and day > calendar.monthrange(year if era == "CE" else 1 - year, month)[1]
+    ):
+        report.error(f"{path}.day", "is not valid for the given month/year", card_id)
+        valid = False
+    if day is not None and month is None:
+        report.error(f"{path}.day", "requires month", card_id)
+        valid = False
+    if precision == "day" and (month is None or day is None):
+        report.error(path, "day precision requires month and day", card_id)
+        valid = False
+    if precision == "month" and month is None:
+        report.error(path, "month precision requires month", card_id)
+        valid = False
+    if precision in {"year", "decade", "century", "era"} and (month is not None or day is not None):
+        report.error(path, f"{precision} precision must not include month/day", card_id)
+        valid = False
+    return valid
+
+
+def validate_timeline(
+    card: dict[str, Any], path: str, report: ValidationReport, card_id: str
+) -> None:
+    include = card.get("timelineInclude")
+    timeline = card.get("timeline")
+    if "timelineInclude" in card and type(include) is not bool:
+        report.error(f"{path}.timelineInclude", "must be boolean", card_id)
+        return
+    if include is False:
+        if "timeline" in card:
+            report.error(f"{path}.timeline", "must be absent when timelineInclude is false", card_id)
+        return
+    if include is True and "timeline" not in card:
+        report.error(f"{path}.timeline", "is required when timelineInclude is true", card_id)
+        return
+    if "timeline" in card and include is not True:
+        report.error(f"{path}.timelineInclude", "must be true when timeline is present", card_id)
+        return
+    if timeline is None:
+        return
+    if not isinstance(timeline, dict):
+        report.error(f"{path}.timeline", f"expected object, got {type(timeline).__name__}", card_id)
+        return
+
+    kind = timeline.get("kind")
+    expected = {"kind", "start"} if kind == "point" else {"kind", "start", "end"}
+    if not validate_exact_keys(timeline, expected, f"{path}.timeline", report, card_id):
+        return
+    if kind not in TIMELINE_KINDS:
+        report.error(f"{path}.timeline.kind", f"expected one of {sorted(TIMELINE_KINDS)}", card_id)
+        return
+    start_valid = validate_timeline_endpoint(timeline.get("start"), f"{path}.timeline.start", report, card_id)
+    end_valid = True
+    if kind == "range":
+        end_valid = validate_timeline_endpoint(timeline.get("end"), f"{path}.timeline.end", report, card_id)
+    if start_valid and end_valid and kind == "range":
+        if timeline["start"]["era"] != timeline["end"]["era"]:
+            report.error(f"{path}.timeline", "cross-era ranges are not supported by separated era views", card_id)
+            return
+        if timeline_endpoint_value(timeline["start"]) > timeline_endpoint_value(timeline["end"]):
+            report.error(f"{path}.timeline", "start must not be later than end", card_id)
+
+
 def validate_card(
     card: Any,
     group: str,
@@ -393,7 +557,12 @@ def validate_card(
     path = f"$.{group}[{index}]"
     preliminary_id = card.get("id") if isinstance(card, dict) else None
     card_id = preliminary_id if isinstance(preliminary_id, str) else "-"
-    if not validate_exact_keys(card, CARD_KEYS, path, report, card_id):
+    if not isinstance(card, dict):
+        report.error(path, f"expected object, got {type(card).__name__}", card_id)
+        return None, None
+    actual_keys = set(card)
+    if not REQUIRED_CARD_KEYS.issubset(actual_keys) or not actual_keys.issubset(REQUIRED_CARD_KEYS | OPTIONAL_CARD_KEYS):
+        report.error(path, describe_keys(actual_keys, REQUIRED_CARD_KEYS), card_id)
         return None, None
 
     string_keys = (
@@ -461,6 +630,7 @@ def validate_card(
     validate_tags(card, path, report, card_id)
     validate_fields(card, path, report, card_id)
     validate_relation_arrays(card, path, report, card_id)
+    validate_timeline(card, path, report, card_id)
     return valid_id, title
 
 
@@ -539,15 +709,102 @@ def validate_relations(
             )
 
 
+def validate_timeline_migration(
+    by_id: dict[str, dict[str, Any]], report: ValidationReport
+) -> None:
+    structured_ids = {
+        card_id for card_id, card in by_id.items()
+        if card.get("timelineInclude") is True or "timeline" in card
+    }
+    missing = sorted(BCE_PHASE_ONE_IDS - structured_ids)
+    extra = sorted(structured_ids - BCE_PHASE_ONE_IDS)
+    if missing:
+        report.error("$timelineMigration", f"missing phase-one IDs {missing}")
+    if extra:
+        report.error("$timelineMigration", f"unexpected structured timeline IDs {extra}")
+    if len(structured_ids) != 46:
+        report.error("$timelineMigration", f"expected exactly 46 structured cards, got {len(structured_ids)}")
+    if timeline_endpoint_value({"era": "BCE", "year": 1})[0] != 0 or timeline_endpoint_value({"era": "BCE", "year": 2})[0] != -1:
+        report.error("$timelineMigration", "astronomical conversion must map 1 BCE to 0 and 2 BCE to -1")
+    for card_id in sorted(BCE_PHASE_ONE_IDS & structured_ids):
+        timeline = by_id[card_id].get("timeline")
+        if not isinstance(timeline, dict):
+            continue
+        endpoints = [timeline.get("start")]
+        if timeline.get("kind") == "range":
+            endpoints.append(timeline.get("end"))
+        if any(not isinstance(endpoint, dict) or endpoint.get("era") != "BCE" for endpoint in endpoints):
+            report.error("$timelineMigration", "phase-one endpoints must all use BCE", card_id)
+            continue
+        expected_kind, expected_start, expected_end, expected_qualifier = BCE_PHASE_ONE_EXPECTED[card_id]
+        actual = (
+            timeline.get("kind"),
+            timeline.get("start", {}).get("year"),
+            timeline.get("end", {}).get("year") if timeline.get("kind") == "range" else None,
+            timeline.get("start", {}).get("qualifier"),
+        )
+        if actual != (expected_kind, expected_start, expected_end, expected_qualifier):
+            report.error("$timelineMigration", f"expected phase-one value {(expected_kind, expected_start, expected_end, expected_qualifier)!r}, got {actual!r}", card_id)
+        if any(endpoint.get("datePrecision") != "year" for endpoint in endpoints):
+            report.error("$timelineMigration", "phase-one precision must be year", card_id)
+        if any(endpoint.get("qualifier") != expected_qualifier for endpoint in endpoints):
+            report.error("$timelineMigration", f"phase-one qualifier must be {expected_qualifier!r}", card_id)
+
+    valid_phase_cards = [
+        (card_id, by_id[card_id]["timeline"]["start"])
+        for card_id in BCE_PHASE_ONE_IDS
+        if isinstance(by_id.get(card_id, {}).get("timeline", {}).get("start"), dict)
+    ]
+    expected_order = [card_id for card_id, _ in sorted(valid_phase_cards, key=lambda item: (-item[1]["year"], item[0]))]
+    astronomical_order = [card_id for card_id, _ in sorted(valid_phase_cards, key=lambda item: (timeline_endpoint_value(item[1]), item[0]))]
+    if astronomical_order != expected_order:
+        report.error("$timelineMigration", "BCE chronological order does not match descending source-year order")
+
+    for card_id, (time_text, kind, start, end) in LEGACY_CE_GOLDEN.items():
+        card = by_id.get(card_id)
+        if card is None:
+            report.error("$timelineGolden", "missing golden CE card", card_id)
+            continue
+        if card.get("timeText") != time_text:
+            report.error("$timelineGolden", f"timeText changed; expected {time_text!r}", card_id)
+        if "timelineInclude" in card or "timeline" in card:
+            report.error("$timelineGolden", "golden CE card must remain on legacy inference", card_id)
+        actual = legacy_ce_snapshot(card.get("timeText", ""))
+        if actual != (kind, start, end):
+            report.error("$timelineGolden", f"legacy snapshot changed: {actual!r}", card_id)
+
+
+def legacy_ce_snapshot(time_text: str) -> tuple[str, str, str | None] | None:
+    """Small executable golden for the legacy patterns represented above."""
+    value = time_text.replace("－", "—").replace("–", "—")
+    month_range = re.search(r"(\d{1,4})年\s*(\d{1,2})月?\s*(?:至|到|—|-)\s*(\d{1,2})月", value)
+    if month_range:
+        year, start_month, end_month = map(int, month_range.groups())
+        return (
+            "range",
+            f"{year:04d}-{start_month:02d}-15",
+            f"{year:04d}-{end_month:02d}-{calendar.monthrange(year, end_month)[1]:02d}",
+        )
+    year_range = re.search(r"(\d{1,4})\s*(?:年)?\s*(?:至|到|—|-)\s*(\d{1,4})年", value)
+    if year_range:
+        start_year, end_year = map(int, year_range.groups())
+        return "range", f"{start_year:04d}-06-30", f"{end_year:04d}-12-31"
+    full_date = re.search(r"(\d{1,4})年\s*(\d{1,2})月\s*(\d{1,2})日", value)
+    if full_date:
+        year, month, day = map(int, full_date.groups())
+        return "point", f"{year:04d}-{month:02d}-{day:02d}", None
+    return None
+
+
 def validate(data: Any, report: ValidationReport) -> None:
     if not validate_exact_keys(data, TOP_LEVEL_KEYS, "$", report):
         return
 
     schema_version = data.get("schemaVersion")
-    if type(schema_version) is not int or schema_version != 1:
+    if type(schema_version) is not int or schema_version != 2:
         report.error(
             "$.schemaVersion",
-            f"expected integer 1, got {schema_version!r}",
+            f"expected integer 2, got {schema_version!r}",
         )
 
     cards: list[tuple[str, int, dict[str, Any]]] = []
@@ -589,6 +846,7 @@ def validate(data: Any, report: ValidationReport) -> None:
                     title_owners[title] = valid_id or f"{group}[{index}]"
 
     validate_relations(cards, by_id, report)
+    validate_timeline_migration(by_id, report)
 
 
 def generated_bytes(data: Any) -> bytes:

@@ -468,6 +468,32 @@
       backdrop-filter: blur(16px);
     }
 
+    .timeline-era-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-bottom: 8px;
+      padding: 3px;
+      border-radius: 10px;
+      background: rgba(78, 60, 38, .07);
+    }
+
+    .timeline-era-switch button {
+      min-height: 30px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #665d51;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .timeline-era-switch button.active {
+      background: rgba(255, 250, 240, .96);
+      color: var(--teal);
+      box-shadow: 0 2px 8px rgba(50, 42, 31, .1);
+    }
+
     .year-jump-form {
       display: flex;
       align-items: center;
@@ -2036,6 +2062,8 @@
       .timeline-view { padding: 24px 16px 42px; }
       .timeline-frame { height: 560px; }
       .timeline-locator { width: auto; min-width: 0; }
+      .timeline-head { inset: 24px 16px auto; }
+      .timeline-head .filters { top: 124px; }
       .timeline-toolbar {
         left: 16px;
         right: 16px;
@@ -2122,8 +2150,12 @@
           <div class="timeline-shell">
             <div class="timeline-head">
               <section class="card timeline-locator" aria-label="年份定位">
+                <div class="timeline-era-switch" id="timeline-era-switch" role="group" aria-label="年代视图">
+                  <button type="button" class="active" data-timeline-era="CE" aria-pressed="true">公元</button>
+                  <button type="button" data-timeline-era="BCE" aria-pressed="false">公元前</button>
+                </div>
                 <form class="year-jump-form" id="year-jump-form">
-                  <label for="year-jump-input">年份</label>
+                  <label for="year-jump-input" id="year-jump-label">年份</label>
                   <input class="year-jump-input" id="year-jump-input" type="number" inputmode="numeric" placeholder="1918" />
                   <button class="year-jump-button" type="submit">前往</button>
                 </form>
@@ -2317,13 +2349,24 @@
     const proverbCards = window.CARD_DATA.proverbCards;
 
     const allCards = [...cards, ...extraHistoryCards, ...proverbCards];
-    const timelineCards = buildTimelineCards(allCards);
+    const allTimelineCards = buildTimelineCards(allCards);
+    let activeTimelineEra = "CE";
+    let timelineCards = allTimelineCards.filter(card => card.timelineEra === activeTimelineEra);
     const timelineExtent = timelineRange(timelineCards);
     timelineStart = timelineExtent.start;
     timelineEnd = timelineExtent.end;
 
     const byId = Object.fromEntries(allCards.map(card => [card.id, card]));
-    const timelineById = Object.fromEntries(timelineCards.map(card => [card.id, card]));
+    const timelineById = Object.fromEntries(allTimelineCards.map(card => [card.id, card]));
+    window.__timelineAudit = Object.freeze({
+      total: allTimelineCards.length,
+      structured: Object.freeze(allTimelineCards.filter(card => card.timelineSource === "structured").map(card => card.id)),
+      legacy: Object.freeze(allTimelineCards.filter(card => card.timelineSource === "legacy-inferred").map(card => card.id)),
+      byEra: Object.freeze({
+        CE: allTimelineCards.filter(card => card.timelineEra === "CE").length,
+        BCE: allTimelineCards.filter(card => card.timelineEra === "BCE").length
+      })
+    });
 
     const views = document.querySelectorAll(".view");
     const navButtons = document.querySelectorAll(".nav button");
@@ -2335,6 +2378,8 @@
     const zoomReadout = document.getElementById("zoom-readout");
     const yearJumpForm = document.getElementById("year-jump-form");
     const yearJumpInput = document.getElementById("year-jump-input");
+    const yearJumpLabel = document.getElementById("year-jump-label");
+    const timelineEraButtons = document.querySelectorAll("[data-timeline-era]");
     const levelFilters = document.getElementById("level-filters");
     const countryFilter = document.getElementById("country-filter");
     const filtersPanel = document.querySelector(".filters");
@@ -2395,7 +2440,8 @@
 
     function yearAtTimelinePixel(pixel) {
       const ratio = Math.max(0, Math.min(1, pixel / axisWidthEstimate()));
-      return new Date(timelineStart + ratio * (timelineEnd - timelineStart)).getFullYear();
+      const value = timelineStart + ratio * (timelineEnd - timelineStart);
+      return activeTimelineEra === "BCE" ? astronomicalToEraYear(value, "BCE") : new Date(value).getFullYear();
     }
 
     function timelineCenterYear() {
@@ -2411,6 +2457,7 @@
       }
       params.set("view", view);
       if (view === "timeline") {
+        if (activeTimelineEra === "BCE") params.set("era", "BCE");
         params.set("year", timelineCenterYear());
         params.set("zoom", zoom.toFixed(2));
         if (activeTags.size) params.set("tags", Array.from(activeTags).join(","));
@@ -2484,6 +2531,10 @@
         zoom = Number.isFinite(routeZoom) ? Math.max(.45, Math.min(8, routeZoom)) : defaultZoom;
         zoomSlider.value = zoom;
         timelineFocusId = timelineById[params.get("focus")] ? params.get("focus") : null;
+        const routeEra = timelineFocusId
+          ? timelineById[timelineFocusId].timelineEra
+          : params.get("era") === "BCE" ? "BCE" : "CE";
+        setTimelineEra(routeEra, { render: false });
         if (timelineFocusId) selectedId = timelineFocusId;
         if (timelineFocusId) prepareTimelineFiltersForFocus();
         renderFilters();
@@ -2599,12 +2650,19 @@
     }
 
     navButtons.forEach(btn => btn.addEventListener("click", () => {
-      if (btn.dataset.view === "timeline") timelineFocusId = null;
+      if (btn.dataset.view === "timeline") {
+        timelineFocusId = null;
+        setTimelineEra("CE", { render: false });
+      }
       if (btn.dataset.view === "map") clearMapCardFocus(false);
       showView(btn.dataset.view);
     }));
     document.getElementById("brand-home").addEventListener("click", () => showView("home"));
-    document.getElementById("home-timeline-button").addEventListener("click", () => showView("timeline"));
+    document.getElementById("home-timeline-button").addEventListener("click", () => {
+      timelineFocusId = null;
+      setTimelineEra("CE", { render: false });
+      showView("timeline");
+    });
     document.getElementById("home-map-button").addEventListener("click", () => {
       clearMapCardFocus(false);
       showView("map");
@@ -4837,8 +4895,11 @@
     }
 
     function inferTimelineData(card) {
-      if (card.kind === "range" && card.startDate && card.endDate) return { kind: "range", startDate: card.startDate, endDate: card.endDate };
-      if (card.date) return { kind: "point", date: card.date };
+      if (card.timelineInclude === false) return null;
+      if (card.timeline) return structuredTimelineData(card);
+      if (card.timelineInclude === true) throw new Error(`Timeline contract error for ${card.id}: timelineInclude=true requires a valid timeline`);
+      if (card.kind === "range" && card.startDate && card.endDate) return { kind: "range", startDate: card.startDate, endDate: card.endDate, timelineEra: "CE", timelineSource: "legacy-inferred" };
+      if (card.date) return { kind: "point", date: card.date, timelineEra: "CE", timelineSource: "legacy-inferred" };
       const timelineOverride = fieldValue(card, "上时间轴").trim();
       if (/^(否|不|no|false)$/i.test(timelineOverride)) return null;
       const explicitlyIncluded = /^(是|yes|true)$/i.test(timelineOverride);
@@ -4853,12 +4914,66 @@
         const endDate = parsedRange?.endDate || parseFirstDate(time, true);
         if (startDate && endDate && startDate !== endDate) {
           if (!shouldKeepTimelineRange(card, startDate, endDate)) return null;
-          return { kind: "range", startDate, endDate };
+          return { kind: "range", startDate, endDate, timelineEra: "CE", timelineSource: "legacy-inferred" };
         }
       }
       const date = parseFirstDate(time);
       if (!date) return null;
-      return { kind: "point", date };
+      return { kind: "point", date, timelineEra: "CE", timelineSource: "legacy-inferred" };
+    }
+
+    function astronomicalYear(endpoint) {
+      return endpoint.era === "BCE" ? 1 - endpoint.year : endpoint.year;
+    }
+
+    function structuredEndpointValue(endpoint) {
+      const month = endpoint.month || 6;
+      const day = endpoint.day || 15;
+      const fraction = Math.max(0, Math.min(.999, ((month - 1) * 31 + day - 1) / 372));
+      return astronomicalYear(endpoint) + fraction;
+    }
+
+    function structuredEndpointPosition(endpoint) {
+      if (endpoint.era === "BCE") return structuredEndpointValue(endpoint);
+      return dateString(endpoint.year, endpoint.month || 6, endpoint.day || 15);
+    }
+
+    function validTimelineEndpoint(endpoint) {
+      if (!endpoint || typeof endpoint !== "object") return false;
+      const allowedKeys = new Set(["era", "year", "month", "day", "datePrecision", "qualifier"]);
+      if (Object.keys(endpoint).some(key => !allowedKeys.has(key))) return false;
+      if (!["BCE", "CE"].includes(endpoint.era)) return false;
+      if (!Number.isInteger(endpoint.year) || endpoint.year <= 0) return false;
+      if (!["day", "month", "year", "decade", "century", "era"].includes(endpoint.datePrecision)) return false;
+      if (!["exact", "circa", "before", "after"].includes(endpoint.qualifier)) return false;
+      if (endpoint.month !== undefined && (!Number.isInteger(endpoint.month) || endpoint.month < 1 || endpoint.month > 12)) return false;
+      if (endpoint.day !== undefined && (!Number.isInteger(endpoint.day) || endpoint.day < 1 || endpoint.day > 31 || endpoint.month === undefined)) return false;
+      if (endpoint.datePrecision === "day" && (endpoint.month === undefined || endpoint.day === undefined)) return false;
+      if (endpoint.datePrecision === "month" && endpoint.month === undefined) return false;
+      if (["year", "decade", "century", "era"].includes(endpoint.datePrecision) && (endpoint.month !== undefined || endpoint.day !== undefined)) return false;
+      return true;
+    }
+
+    function structuredTimelineData(card) {
+      const timeline = card.timeline;
+      const validKind = timeline && ["point", "range"].includes(timeline.kind);
+      const timelineKeys = timeline && Object.keys(timeline).sort().join(",");
+      const validKeys = timeline?.kind === "point" ? timelineKeys === "kind,start" : timelineKeys === "end,kind,start";
+      const validStart = validKind && validTimelineEndpoint(timeline.start);
+      const validEnd = timeline?.kind === "point" || validTimelineEndpoint(timeline?.end);
+      const sameEra = timeline?.kind === "point" || timeline?.start?.era === timeline?.end?.era;
+      if (!validKeys || !validStart || !validEnd || !sameEra) {
+        throw new Error(`Timeline contract error for ${card.id}: invalid structured timeline`);
+      }
+      const timelineEra = timeline.start.era;
+      const startValue = structuredEndpointValue(timeline.start);
+      const startPosition = structuredEndpointPosition(timeline.start);
+      if (timeline.kind === "point") {
+        return { kind: "point", date: startPosition, sortValue: startValue, timelineEra, timelineSource: "structured" };
+      }
+      const endValue = structuredEndpointValue(timeline.end);
+      if (endValue < startValue) throw new Error(`Timeline contract error for ${card.id}: start is later than end`);
+      return { kind: "range", startDate: startPosition, endDate: structuredEndpointPosition(timeline.end), sortValue: startValue, timelineEra, timelineSource: "structured" };
     }
 
     function buildTimelineCards(sourceCards) {
@@ -4880,9 +4995,12 @@
 
     function timelineRange(items) {
       const values = items.flatMap(card => card.kind === "range" ? [card.startDate, card.endDate] : [card.date])
-        .map(date => new Date(date).getTime())
+        .map(timelineValue)
         .filter(Number.isFinite);
       if (!values.length) return { start: new Date("1914-01-01").getTime(), end: new Date("1933-01-31").getTime() };
+      if (activeTimelineEra === "BCE") {
+        return { start: Math.floor(Math.min(...values)) - 1, end: Math.ceil(Math.max(...values)) + 1 };
+      }
       const startDate = new Date(Math.min(...values));
       const endDate = new Date(Math.max(...values));
       return {
@@ -4891,14 +5009,21 @@
       };
     }
 
+    function timelineValue(dateValue) {
+      return typeof dateValue === "number" && activeTimelineEra === "BCE" ? dateValue : new Date(dateValue).getTime();
+    }
+
     function pctForDate(dateText) {
-      const value = new Date(dateText).getTime();
+      const value = timelineValue(dateText);
       return Math.max(0, Math.min(1, (value - timelineStart) / (timelineEnd - timelineStart)));
     }
 
     function timelinePixelWidth() {
-      const totalYears = Math.max(1, (timelineEnd - timelineStart) / (365.25 * 24 * 60 * 60 * 1000));
-      return Math.round(Math.max(1600, totalYears * 54) * zoom);
+      const totalYears = activeTimelineEra === "BCE"
+        ? Math.max(1, timelineEnd - timelineStart)
+        : Math.max(1, (timelineEnd - timelineStart) / (365.25 * 24 * 60 * 60 * 1000));
+      const pixelsPerYear = activeTimelineEra === "BCE" ? Math.max(7, Math.min(18, 10000 / totalYears)) : 54;
+      return Math.round(Math.max(1600, totalYears * pixelsPerYear) * zoom);
     }
 
     function axisWidthEstimate() {
@@ -4908,6 +5033,39 @@
     function xForDate(dateText) {
       const width = axisWidthEstimate();
       return 70 + pctForDate(dateText) * width;
+    }
+
+    function astronomicalToEraYear(value, era = activeTimelineEra) {
+      const astronomical = Math.floor(Number(value));
+      return era === "BCE" ? Math.max(1, 1 - astronomical) : astronomical;
+    }
+
+    function formatTimelineYear(value) {
+      return activeTimelineEra === "BCE"
+        ? `公元前${astronomicalToEraYear(value, "BCE")}`
+        : String(new Date(value).getFullYear());
+    }
+
+    function setTimelineEra(era, options = {}) {
+      activeTimelineEra = era === "BCE" ? "BCE" : "CE";
+      timelineCards = allTimelineCards.filter(card => card.timelineEra === activeTimelineEra);
+      const extent = timelineRange(timelineCards);
+      timelineStart = extent.start;
+      timelineEnd = extent.end;
+      timelineEraButtons.forEach(button => {
+        const active = button.dataset.timelineEra === activeTimelineEra;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+      yearJumpLabel.textContent = activeTimelineEra === "BCE" ? "公元前年份" : "年份";
+      yearJumpInput.placeholder = activeTimelineEra === "BCE" ? "499" : "1918";
+      const bounds = activeTimelineEra === "BCE"
+        ? [astronomicalToEraYear(timelineEnd, "BCE"), astronomicalToEraYear(timelineStart, "BCE")]
+        : [new Date(timelineStart).getFullYear(), new Date(timelineEnd).getFullYear()];
+      yearJumpInput.min = Math.min(...bounds);
+      yearJumpInput.max = Math.max(...bounds);
+      yearJumpInput.value = "";
+      if (options.render !== false && currentViewName() === "timeline") renderTimeline();
     }
 
     function tagColor(tag) {
@@ -5103,6 +5261,7 @@
 
     function searchDateValue(card) {
       const timelineCard = timelineById[card.id];
+      if (Number.isFinite(timelineCard?.sortValue)) return timelineCard.sortValue * 365.25 * 24 * 60 * 60 * 1000;
       const dateText = timelineCard?.date || timelineCard?.startDate || parseFirstDate(card.timeText);
       const value = dateText ? new Date(dateText).getTime() : NaN;
       return Number.isFinite(value) ? value : null;
@@ -5484,11 +5643,17 @@
     function visibleYearSpan() {
       const axisWidth = axisWidthEstimate();
       const visibleRatio = Math.min(1, timelineFrame.clientWidth / axisWidth);
-      return ((timelineEnd - timelineStart) / (365.25 * 24 * 60 * 60 * 1000)) * visibleRatio;
+      const totalYears = activeTimelineEra === "BCE"
+        ? timelineEnd - timelineStart
+        : (timelineEnd - timelineStart) / (365.25 * 24 * 60 * 60 * 1000);
+      return totalYears * visibleRatio;
     }
 
     function yearTickStep() {
       const span = visibleYearSpan();
+      if (span > 700) return 100;
+      if (span > 300) return 50;
+      if (span > 140) return 20;
       if (span > 90) return 10;
       if (span > 24) return 5;
       return 1;
@@ -5506,17 +5671,19 @@
     }
 
     function jumpToYear(value) {
-      const minYear = new Date(timelineStart).getFullYear();
-      const maxYear = new Date(timelineEnd).getFullYear();
       const requestedYear = Math.round(Number(value));
-      if (!Number.isFinite(requestedYear)) {
+      if (!Number.isFinite(requestedYear) || (activeTimelineEra === "BCE" && requestedYear <= 0)) {
         yearJumpInput.setCustomValidity("请输入年份");
         yearJumpInput.reportValidity();
         return;
       }
       yearJumpInput.setCustomValidity("");
+      const minYear = Number(yearJumpInput.min);
+      const maxYear = Number(yearJumpInput.max);
       const year = Math.max(minYear, Math.min(maxYear, requestedYear));
-      const targetTime = new Date(dateString(year, 7, 1)).getTime();
+      const targetTime = activeTimelineEra === "BCE"
+        ? 1 - year + .5
+        : new Date(dateString(year, 7, 1)).getTime();
       const ratio = (targetTime - timelineStart) / (timelineEnd - timelineStart);
       timelineFrame.scrollLeft = Math.max(0, 70 + ratio * axisWidthEstimate() - timelineFrame.clientWidth / 2);
       yearJumpInput.value = year;
@@ -5537,7 +5704,7 @@
       windowEl.className = "density-window";
       const range = document.createElement("span");
       range.className = "overview-range";
-      range.textContent = `${new Date(timelineStart).getFullYear()}—${new Date(timelineEnd).getFullYear()}`;
+      range.textContent = `${formatTimelineYear(timelineStart)}—${formatTimelineYear(timelineEnd)}`;
       const binCount = Math.max(48, Math.min(180, Math.round(axisWidthEstimate() / 34)));
       const bins = Array.from({ length: binCount }, () => 0);
       sourceCards.forEach(card => {
@@ -5580,15 +5747,16 @@
     function renderTimeline() {
       timelineCanvas.style.width = `${timelinePixelWidth()}px`;
       timelineCanvas.querySelectorAll(".year-line,.year-label,.year-tick,.month-tick,.month-label,.node,.range,.timeline-label,.timeline-connector,.overlap-link").forEach(el => el.remove());
-      const showMonths = visibleYearSpan() <= 3.25;
+      const showMonths = activeTimelineEra === "CE" && visibleYearSpan() <= 3.25;
       const tickStep = yearTickStep();
 
-      const startYear = new Date(timelineStart).getFullYear();
-      const endYear = new Date(timelineEnd).getFullYear();
+      const startYear = activeTimelineEra === "BCE" ? Math.ceil(timelineStart) : new Date(timelineStart).getFullYear();
+      const endYear = activeTimelineEra === "BCE" ? Math.floor(timelineEnd) : new Date(timelineEnd).getFullYear();
       const years = Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index);
       years.forEach((year) => {
-        if (tickStep > 1 && year % tickStep !== 0 && year !== startYear && year !== endYear) return;
-        const x = xForDate(`${year}-01-01`);
+        const eraYear = activeTimelineEra === "BCE" ? astronomicalToEraYear(year, "BCE") : year;
+        if (tickStep > 1 && eraYear % tickStep !== 0 && year !== startYear && year !== endYear) return;
+        const x = xForDate(activeTimelineEra === "BCE" ? year : `${year}-01-01`);
         const line = document.createElement("div");
         line.className = "year-line";
         line.style.left = `${x}px`;
@@ -5598,7 +5766,7 @@
         const label = document.createElement("div");
         label.className = "year-label";
         label.style.left = `${x}px`;
-        label.textContent = year;
+        label.textContent = activeTimelineEra === "BCE" ? `前${eraYear}` : year;
         timelineCanvas.append(line, tick, label);
 
         if (showMonths) {
@@ -5649,7 +5817,7 @@
         }
         return { side: "lower", lane: rangeGroups.lower.length };
       };
-      visibleCards.filter(card => card.kind === "range").sort((a, b) => new Date(a.startDate) - new Date(b.startDate)).forEach((card) => {
+      visibleCards.filter(card => card.kind === "range").sort((a, b) => timelineValue(a.startDate) - timelineValue(b.startDate)).forEach((card) => {
         const left = xForDate(card.startDate);
         const right = xForDate(card.endDate);
         const placement = chooseRangePlacement(left);
@@ -5679,7 +5847,7 @@
       const lowerRangeBottom = maxLowerRangeLane >= 0 ? axisY + 20 + maxLowerRangeLane * rangeLaneStep + 24 : axisY + 20;
       const upperRangeTop = maxUpperRangeLane >= 0 ? axisY - 44 - maxUpperRangeLane * rangeLaneStep : axisY - 44;
 
-      const pointCards = visibleCards.filter(card => card.kind !== "range").sort((a, b) => new Date(a.date) - new Date(b.date));
+      const pointCards = visibleCards.filter(card => card.kind !== "range").sort((a, b) => timelineValue(a.date) - timelineValue(b.date));
       const upperLaneCount = 10;
       const lowerLaneCount = 12;
       const laneStep = 58;
@@ -5736,7 +5904,10 @@
         timelineCanvas.appendChild(node);
 
         let lane = 0;
-        const primary = overlapGroup
+        const selectedMobilePoint = card.id === selectedId && window.matchMedia("(max-width: 860px)").matches;
+        const primary = selectedMobilePoint
+          ? lowerLanes
+          : overlapGroup
           ? (index % 2 === 0 ? lowerLanes : upperLanes)
           : (index % 2 === 0 ? upperLanes : lowerLanes);
         const secondary = primary === upperLanes ? lowerLanes : upperLanes;
@@ -5866,6 +6037,7 @@
     function focusCardOnTimeline(id) {
       const card = timelineById[id];
       if (!card) return;
+      setTimelineEra(card.timelineEra, { render: false });
       selectedId = id;
       timelineFocusId = id;
       activeTags.clear();
@@ -6034,6 +6206,18 @@
       event.preventDefault();
       jumpToYear(yearJumpInput.value);
     });
+    timelineEraButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        const era = button.dataset.timelineEra;
+        if (era === activeTimelineEra) return;
+        timelineFocusId = null;
+        setTimelineEra(era, { render: false });
+        if (activeLevels === null) renderLevelFilters();
+        renderTimeline();
+        setTimelineFramePosition(0, 0);
+        syncUrl("push");
+      });
+    });
     copyTimelineLink.addEventListener("click", event => {
       syncUrl("replace");
       copyLink(window.location.href, event.currentTarget);
@@ -6069,9 +6253,8 @@
     renderRecommendations();
     renderFilters();
     renderLevelFilters();
+    setTimelineEra("CE", { render: false });
     renderTimeline();
-    yearJumpInput.min = new Date(timelineStart).getFullYear();
-    yearJumpInput.max = new Date(timelineEnd).getFullYear();
     renderDetail();
     setZoom(zoom);
     urlReady = true;

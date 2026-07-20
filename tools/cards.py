@@ -125,6 +125,28 @@ BCE_PHASE_ONE_EXPECTED = {
 }
 BCE_PHASE_ONE_IDS = set(BCE_PHASE_ONE_EXPECTED)
 
+# Editorially approved complex-date batch. Endpoint tuples are
+# (era, year, datePrecision, qualifier) and are locked exactly so later edits
+# cannot silently flatten century/decade precision or asymmetric qualifiers.
+PHASE_TWO_EXPECTED = {
+    "extra1937": ("range", ("BCE", 230, "year", "exact"), ("BCE", 221, "year", "exact")),
+    "extra1958": ("range", ("BCE", 359, "year", "circa"), ("BCE", 338, "year", "exact")),
+    "extra393": ("range", ("CE", 301, "century", "circa"), ("CE", 600, "century", "circa")),
+    "extra403": ("range", ("CE", 1001, "century", "circa"), ("CE", 1400, "century", "circa")),
+    "extra952": ("range", ("CE", 1850, "decade", "circa"), ("CE", 1910, "decade", "circa")),
+    "extra2118": ("range", ("CE", 1, "century", "circa"), ("CE", 300, "century", "circa")),
+    "extra2190": ("range", ("BCE", 800, "century", "circa"), ("BCE", 601, "century", "circa")),
+    "extra2710": ("point", ("CE", 480, "decade", "circa"), None),
+    "extra1031": ("range", ("CE", 1250, "decade", "circa"), ("CE", 1300, "decade", "circa")),
+    "extra1043": ("range", ("CE", 1201, "century", "circa"), ("CE", 1500, "century", "circa")),
+    "extra1911": ("range", ("CE", 801, "century", "circa"), ("CE", 1300, "century", "circa")),
+    "extra1090": ("range", ("CE", 1450, "decade", "after"), ("CE", 1900, "century", "circa")),
+    "extra1100": ("range", ("CE", 1580, "decade", "circa"), ("CE", 1800, "century", "circa")),
+    "extra1110": ("range", ("CE", 1530, "decade", "circa"), ("CE", 1580, "decade", "circa")),
+}
+PHASE_TWO_IDS = set(PHASE_TWO_EXPECTED)
+STRUCTURED_TIMELINE_IDS = BCE_PHASE_ONE_IDS | PHASE_TWO_IDS
+
 # Representative unmigrated CE cards protect the legacy inference contract.
 # These exact snapshots are intentionally independent of structured timeline
 # data so existing CE positions cannot drift unnoticed.
@@ -716,14 +738,14 @@ def validate_timeline_migration(
         card_id for card_id, card in by_id.items()
         if card.get("timelineInclude") is True or "timeline" in card
     }
-    missing = sorted(BCE_PHASE_ONE_IDS - structured_ids)
-    extra = sorted(structured_ids - BCE_PHASE_ONE_IDS)
+    missing = sorted(STRUCTURED_TIMELINE_IDS - structured_ids)
+    extra = sorted(structured_ids - STRUCTURED_TIMELINE_IDS)
     if missing:
-        report.error("$timelineMigration", f"missing phase-one IDs {missing}")
+        report.error("$timelineMigration", f"missing approved structured timeline IDs {missing}")
     if extra:
         report.error("$timelineMigration", f"unexpected structured timeline IDs {extra}")
-    if len(structured_ids) != 46:
-        report.error("$timelineMigration", f"expected exactly 46 structured cards, got {len(structured_ids)}")
+    if len(structured_ids) != 60:
+        report.error("$timelineMigration", f"expected exactly 60 structured cards, got {len(structured_ids)}")
     if timeline_endpoint_value({"era": "BCE", "year": 1})[0] != 0 or timeline_endpoint_value({"era": "BCE", "year": 2})[0] != -1:
         report.error("$timelineMigration", "astronomical conversion must map 1 BCE to 0 and 2 BCE to -1")
     for card_id in sorted(BCE_PHASE_ONE_IDS & structured_ids):
@@ -759,6 +781,24 @@ def validate_timeline_migration(
     astronomical_order = [card_id for card_id, _ in sorted(valid_phase_cards, key=lambda item: (timeline_endpoint_value(item[1]), item[0]))]
     if astronomical_order != expected_order:
         report.error("$timelineMigration", "BCE chronological order does not match descending source-year order")
+
+    for card_id in sorted(PHASE_TWO_IDS & structured_ids):
+        timeline = by_id[card_id].get("timeline")
+        if not isinstance(timeline, dict):
+            continue
+        expected_kind, expected_start, expected_end = PHASE_TWO_EXPECTED[card_id]
+        actual_start = timeline.get("start")
+        actual_end = timeline.get("end") if timeline.get("kind") == "range" else None
+        endpoint_tuple = lambda endpoint: (
+            endpoint.get("era"),
+            endpoint.get("year"),
+            endpoint.get("datePrecision"),
+            endpoint.get("qualifier"),
+        ) if isinstance(endpoint, dict) else None
+        actual = (timeline.get("kind"), endpoint_tuple(actual_start), endpoint_tuple(actual_end))
+        expected = (expected_kind, expected_start, expected_end)
+        if actual != expected:
+            report.error("$timelineMigration", f"expected phase-two value {expected!r}, got {actual!r}", card_id)
 
     for card_id, (time_text, kind, start, end) in LEGACY_CE_GOLDEN.items():
         card = by_id.get(card_id)

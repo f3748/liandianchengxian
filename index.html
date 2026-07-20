@@ -5004,7 +5004,7 @@
       const startDate = new Date(Math.min(...values));
       const endDate = new Date(Math.max(...values));
       return {
-        start: new Date(dateString(startDate.getFullYear() - 1, 1, 1)).getTime(),
+        start: new Date(dateString(Math.max(1, startDate.getFullYear() - 1), 1, 1)).getTime(),
         end: new Date(dateString(endDate.getFullYear() + 1, 12, 31)).getTime()
       };
     }
@@ -5103,6 +5103,7 @@
     }
 
     function hasActiveLevel(card, baseCards = timelineCards) {
+      if (card.id === timelineFocusId) return true;
       if (activeLevels) return activeLevels.has(card.level);
       return shouldShowSemanticCard(card, baseCards);
     }
@@ -5261,9 +5262,12 @@
 
     function searchDateValue(card) {
       const timelineCard = timelineById[card.id];
-      if (Number.isFinite(timelineCard?.sortValue)) return timelineCard.sortValue * 365.25 * 24 * 60 * 60 * 1000;
+      if (Number.isFinite(timelineCard?.sortValue)) return timelineCard.sortValue;
       const dateText = timelineCard?.date || timelineCard?.startDate || parseFirstDate(card.timeText);
-      const value = dateText ? new Date(dateText).getTime() : NaN;
+      const date = dateText ? new Date(dateText) : null;
+      const value = date && Number.isFinite(date.getTime())
+        ? date.getFullYear() + date.getMonth() / 12 + date.getDate() / 372
+        : NaN;
       return Number.isFinite(value) ? value : null;
     }
 
@@ -5585,7 +5589,7 @@
     }
 
     function cardsMatchingBaseFilters() {
-      return timelineCards.filter(card => hasActiveTag(card) && hasActiveCountry(card));
+      return timelineCards.filter(card => card.id === timelineFocusId || (hasActiveTag(card) && hasActiveCountry(card)));
     }
 
     function semanticPointX(card) {
